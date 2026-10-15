@@ -25,8 +25,8 @@ export interface Trip {
   nm?: number;
   travel?: Localized;
   options: Option[];
-  /** Short practical note shown on the card, e.g. passport and customs. */
-  notice?: Localized;
+  /** Important practical warning shown in red on the card and trip page, e.g. passport and customs. */
+  notice?: { title: Localized; body: Localized };
   included: Localized<string[]>;
   bring: Localized<string[]>;
 }
@@ -153,10 +153,13 @@ export const trips: Trip[] = [
         ),
       },
     ],
-    notice: L(
-      'Bring your passport. You’ll clear customs on arrival in St. Thomas; it’s usually quick.',
-      'Trae tu pasaporte. Pasarás por aduana al llegar a St. Thomas; normalmente es rápido.',
-    ),
+    notice: {
+      title: L('Passport required', 'Pasaporte requerido'),
+      body: L(
+        'St. Thomas is outside U.S. customs territory, so every guest clears customs on arrival. Bring your passport; it’s usually quick.',
+        'St. Thomas está fuera del territorio aduanero de EE. UU., así que cada pasajero pasa por aduana al llegar. Trae tu pasaporte; normalmente es rápido.',
+      ),
+    },
     included,
     bring,
   },

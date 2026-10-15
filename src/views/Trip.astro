@@ -59,14 +59,15 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
         </div>
         {
           trip.notice && (
-            <p class="tb__notice">
+            <div class="warning tb__warning" role="note">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="5" y="3" width="14" height="18" rx="2" />
                 <circle cx="12" cy="10" r="3" />
                 <path d="M9 16h6" />
               </svg>
-              {trip.notice[lang]}
-            </p>
+              <strong>{trip.notice.title[lang]}</strong>
+              <p>{trip.notice.body[lang]}</p>
+            </div>
           )
         }
       </section>
@@ -243,8 +244,10 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
     gap: 1.5rem;
   }
   .lengths__col {
-    padding-top: 1rem;
-    border-top: 1px solid var(--atlantic);
+    padding: 1.1rem 1.25rem 1.25rem;
+    border: 1.5px solid color-mix(in oklab, var(--atlantic) 22%, transparent);
+    border-radius: 10px;
+    background: #fff;
   }
   .lengths__h {
     font-family: var(--serif);
@@ -278,23 +281,9 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
     height: 1px;
     background: var(--brass);
   }
-  .tb__notice {
-    display: flex;
-    gap: 0.7rem;
-    align-items: flex-start;
+  .tb__warning {
     margin-top: 2rem;
-    padding: 0.9rem 1.1rem;
-    border-radius: 3px;
-    background: color-mix(in oklab, var(--brass-light) 26%, var(--salt));
-    max-width: 56ch;
-  }
-  .tb__notice svg {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    fill: none;
-    stroke: var(--atlantic);
-    stroke-width: 1.4;
+    max-width: 60ch;
   }
   .gallery {
     display: grid;

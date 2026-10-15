@@ -47,21 +47,16 @@ const cards = [
                   <p class="pkg__summary">{trip.summary[lang]}</p>
 
                   {trip.options.length > 1 ? (
-                    <fieldset class="pkg__lengths">
-                      <legend class="visually-hidden">{ui.length}</legend>
-                      {trip.options.map((o, i) => (
-                        <label class="chip">
-                          <input
-                            type="radio"
-                            name={`len-${trip.slug}`}
-                            value={o.hours}
-                            checked={i === d}
-                            data-price={ui.from(money(optionFrom(trip, o), lang))}
-                          />
-                          <span>{ui.short(o.hours)}</span>
-                        </label>
-                      ))}
-                    </fieldset>
+                    <label class="select pkg__select">
+                      <span>{ui.length}</span>
+                      <select data-length>
+                        {trip.options.map((o, i) => (
+                          <option value={o.hours} selected={i === d} data-price={ui.from(money(optionFrom(trip, o), lang))}>
+                            {ui.hours(o.hours)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   ) : (
                     <p class="pkg__single numeric">
                       {trip.kind === 'destination' ? `${ui.fullDay}, ${ui.hours(trip.options[0].hours).toLowerCase()}` : ui.hours(trip.options[0].hours)}
@@ -77,14 +72,15 @@ const cards = [
                   </div>
 
                   {trip.notice && (
-                    <p class="pkg__notice">
+                    <div class="warning pkg__warning" role="note">
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <rect x="5" y="3" width="14" height="18" rx="2" />
                         <circle cx="12" cy="10" r="3" />
                         <path d="M9 16h6" />
                       </svg>
-                      {trip.notice[lang]}
-                    </p>
+                      <strong>{trip.notice.title[lang]}</strong>
+                      <p>{trip.notice.body[lang]}</p>
+                    </div>
                   )}
 
                   <div class="pkg__foot">
@@ -129,10 +125,28 @@ const cards = [
     padding-top: clamp(1rem, 3vh, 2rem);
     border-top: 1px solid var(--line);
   }
+  /* Each package is its own bordered card so the grid reads as separate choices */
   .pkg {
     grid-column: span 2;
     display: flex;
     flex-direction: column;
+    padding: 0.75rem 0.75rem 1.25rem;
+    border: 1.5px solid color-mix(in oklab, var(--atlantic) 22%, transparent);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 0 rgb(11 44 61 / 0.04);
+    transition:
+      border-color 0.4s var(--ease),
+      box-shadow 0.5s var(--ease),
+      translate 0.5s var(--ease);
+  }
+  .pkg:hover {
+    border-color: var(--atlantic);
+    box-shadow: 0 24px 40px -28px rgb(11 44 61 / 0.45);
+    translate: 0 -4px;
+  }
+  .pkg__body {
+    padding-inline: 0.5rem;
   }
   .pkg--wide {
     grid-column: span 3;
@@ -141,7 +155,7 @@ const cards = [
     display: block;
     aspect-ratio: 4 / 3;
     overflow: hidden;
-    border-radius: 2px;
+    border-radius: 6px;
     margin-bottom: 1.25rem;
     background: var(--lagoon);
   }
@@ -179,49 +193,15 @@ const cards = [
     margin-bottom: 1.25rem;
     max-width: 46ch;
   }
-  .pkg__lengths {
-    display: flex;
-    gap: 0.5rem;
-    border: 0;
-    padding: 0;
-    margin: 0 0 1rem;
+  /* Reserve three lines so the dropdowns line up across a row */
+  @media (min-width: 1001px) {
+    .pkg:not(.pkg--wide) .pkg__summary {
+      min-height: calc(1.6em * 3);
+    }
   }
-  .chip {
-    position: relative;
-    cursor: pointer;
-  }
-  .chip input {
-    position: absolute;
-    opacity: 0;
-    inset: 0;
-    margin: 0;
-    cursor: pointer;
-  }
-  .chip span {
-    display: block;
-    min-width: 3.6rem;
-    padding: 0.45rem 0.9rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    text-align: center;
-    font-size: 0.92rem;
-    font-variant-numeric: lining-nums tabular-nums;
-    transition:
-      background 0.35s var(--ease),
-      color 0.35s var(--ease),
-      border-color 0.35s var(--ease);
-  }
-  .chip:hover span {
-    border-color: var(--atlantic);
-  }
-  .chip input:checked + span {
-    background: var(--atlantic);
-    border-color: var(--atlantic);
-    color: var(--salt);
-  }
-  .chip input:focus-visible + span {
-    outline: 2px solid var(--brass);
-    outline-offset: 2px;
+  .pkg__select {
+    margin-bottom: 1.1rem;
+    max-width: 16rem;
   }
   .pkg__single {
     font-size: 0.92rem;
@@ -247,26 +227,8 @@ const cards = [
     height: 1px;
     background: var(--brass);
   }
-  .pkg__notice {
-    display: flex;
-    gap: 0.6rem;
-    align-items: flex-start;
-    font-size: 0.85rem;
-    line-height: 1.45;
-    padding: 0.7rem 0.85rem;
+  .pkg__warning {
     margin-bottom: 1.25rem;
-    border-radius: 3px;
-    background: color-mix(in oklab, var(--brass-light) 26%, var(--salt));
-    max-width: 46ch;
-  }
-  .pkg__notice svg {
-    flex: none;
-    width: 18px;
-    height: 18px;
-    margin-top: 1px;
-    fill: none;
-    stroke: var(--atlantic);
-    stroke-width: 1.4;
   }
   .pkg__foot {
     margin-top: auto;
@@ -324,23 +286,22 @@ const cards = [
 
   cards.forEach((card) => {
     const price = card.querySelector<HTMLElement>('[data-price]')!;
-    card.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((input) =>
-      input.addEventListener('change', () => {
-        const h = input.value;
-        // Every link on the card carries the chosen length to the trip page.
-        card.querySelectorAll<HTMLAnchorElement>('[data-pkg-link]').forEach((a) => (a.href = `${card.dataset.url}?h=${h}`));
+    card.querySelector<HTMLSelectElement>('[data-length]')?.addEventListener('change', (e) => {
+      const select = e.currentTarget as HTMLSelectElement;
+      const h = select.value;
+      // Every link on the card carries the chosen length to the trip page.
+      card.querySelectorAll<HTMLAnchorElement>('[data-pkg-link]').forEach((a) => (a.href = `${card.dataset.url}?h=${h}`));
 
-        const next = card.querySelector<HTMLElement>(`[data-fits="${h}"]`)!;
-        const prev = card.querySelector<HTMLElement>('[data-fits]:not([hidden])');
-        if (prev && prev !== next) prev.hidden = true;
-        next.hidden = false;
-        price.textContent = input.dataset.price!;
-        if (!reducedMotion) {
-          gsap.fromTo(next.children, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.05, ease: 'expo.out' });
-          gsap.fromTo(price, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out' });
-        }
-      }),
-    );
+      const next = card.querySelector<HTMLElement>(`[data-fits="${h}"]`)!;
+      const prev = card.querySelector<HTMLElement>('[data-fits]:not([hidden])');
+      if (prev && prev !== next) prev.hidden = true;
+      next.hidden = false;
+      price.textContent = select.selectedOptions[0].dataset.price!;
+      if (!reducedMotion) {
+        gsap.fromTo(next.children, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.05, ease: 'expo.out' });
+        gsap.fromTo(price, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out' });
+      }
+    });
   });
 
   if (!reducedMotion) {

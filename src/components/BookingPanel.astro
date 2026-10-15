@@ -37,17 +37,16 @@ const config = {
 
   {
     lengths.length > 1 && (
-      <fieldset class="book__group">
-        <legend>{ui.length}</legend>
-        <div class="book__lengths">
+      <label class="select book__group">
+        <span>{ui.length}</span>
+        <select name="length" data-length>
           {lengths.map((h) => (
-            <label class="book__len">
-              <input type="radio" name="length" value={h} checked={h === startHours} />
-              <span>{t(lang).trips.hours(h)}</span>
-            </label>
+            <option value={h} selected={h === startHours}>
+              {t(lang).trips.hours(h)}
+            </option>
           ))}
-        </div>
-      </fieldset>
+        </select>
+      </label>
     )
   }
 
@@ -133,40 +132,6 @@ const config = {
   .book__boats {
     display: grid;
     gap: 0.5rem;
-  }
-  .book__lengths {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-  }
-  .book__len {
-    position: relative;
-    cursor: pointer;
-  }
-  .book__len input {
-    position: absolute;
-    opacity: 0;
-  }
-  .book__len span {
-    display: block;
-    padding: 0.55rem 0.4rem;
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    text-align: center;
-    font-size: 0.92rem;
-    transition:
-      background 0.3s,
-      color 0.3s,
-      border-color 0.3s;
-  }
-  .book__len input:checked + span {
-    background: var(--atlantic);
-    border-color: var(--atlantic);
-    color: var(--salt);
-  }
-  .book__len input:focus-visible + span {
-    outline: 2px solid var(--brass);
-    outline-offset: 2px;
   }
   .book__boat {
     position: relative;
@@ -390,8 +355,8 @@ const config = {
     const askedHours = Number(params.get('h'));
     let hours = cfg.lengths.includes(askedHours) ? askedHours : cfg.startHours;
     let boat = cfg.boats.find((b) => b.slug === params.get('boat')) ?? cfg.boats[0];
-    const lengthInput = root.querySelector<HTMLInputElement>(`input[name="length"][value="${hours}"]`);
-    if (lengthInput) lengthInput.checked = true;
+    const lengthSelect = root.querySelector<HTMLSelectElement>('[data-length]');
+    if (lengthSelect) lengthSelect.value = String(hours);
     root.querySelector<HTMLInputElement>(`input[name="boat"][value="${boat.slug}"]`)!.checked = true;
     let date: Date | null = null;
     let guests = Math.min(2, boat.guests);
@@ -459,12 +424,10 @@ const config = {
         update();
       }),
     );
-    root.querySelectorAll<HTMLInputElement>('input[name="length"]').forEach((input) =>
-      input.addEventListener('change', () => {
-        hours = Number(input.value);
-        update();
-      }),
-    );
+    lengthSelect?.addEventListener('change', () => {
+      hours = Number(lengthSelect.value);
+      update();
+    });
     root.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) =>
       b.addEventListener('click', () => {
         guests = Math.max(1, Math.min(boat.guests, guests + Number(b.dataset.step)));

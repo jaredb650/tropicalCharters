@@ -194,6 +194,68 @@ p {
   --btn-fg: var(--atlantic);
 }
 
+/* ---------- Dropdown ---------- */
+.select {
+  display: grid;
+  gap: 0.35rem;
+}
+.select > span {
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+}
+.select select {
+  appearance: none;
+  width: 100%;
+  padding: 0.75rem 2.75rem 0.75rem 1rem;
+  border: 1.5px solid var(--atlantic);
+  border-radius: 6px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b2c3d' stroke-width='1.8'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+      right 0.9rem center / 18px no-repeat,
+    #fff;
+  color: var(--atlantic);
+  font: 500 1rem/1.2 var(--sans);
+  cursor: pointer;
+  transition: box-shadow 0.3s var(--ease);
+}
+.select select:hover {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--lagoon) 80%, transparent);
+}
+.select select:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* ---------- Warning (passport and customs) ---------- */
+.warning {
+  --warn: #d7192d;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 6px;
+  background: var(--warn);
+  color: #fff;
+  box-shadow: 0 10px 24px -14px rgb(215 25 45 / 0.8);
+}
+.warning svg {
+  grid-row: span 2;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+.warning strong {
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+.warning p {
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 /* Underlined text link that draws on hover */
 .link {
   text-decoration: none;
