@@ -543,9 +543,11 @@ const nm5 = (5 * 1000) / 60;
     tl.to({}, { duration: 0.5 });
     entries.forEach((entry, i) => {
       if (i === 0) return;
+      // Text color flips quickly mid-leg so it never fades into a background of the same tone.
       tl.to(state, { r: at[i], duration: 1, ease: 'sine.inOut', onUpdate: render }, '>')
-        .to(section, { '--v-bg': entry.dataset.bg, '--v-ink': entry.dataset.ink, duration: 1 }, '<')
-        .to({}, { duration: 0.55 });
+        .to(section, { '--v-bg': entry.dataset.bg, duration: 1 }, '<')
+        .to(section, { '--v-ink': entry.dataset.ink, duration: 0.12 }, '<0.45')
+        .to({}, { duration: 0.55 }, '>0.43');
     });
   }
 </script>

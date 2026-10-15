@@ -78,7 +78,8 @@ const ui = t(lang).fleet;
   .fleet__track {
     display: flex;
     align-items: center;
-    gap: clamp(3rem, 7vw, 8rem);
+    /* Much wider between boats than within one, so each photo reads with its own specs */
+    gap: clamp(6rem, 16vw, 18rem);
     padding-inline: var(--gutter) 12vw;
     padding-top: 60px;
     will-change: transform;
@@ -99,7 +100,7 @@ const ui = t(lang).fleet;
     flex: 0 0 auto;
     display: grid;
     grid-template-columns: min(52vw, 860px) minmax(16rem, 22rem);
-    gap: clamp(1.5rem, 3vw, 3rem);
+    gap: clamp(1.25rem, 2vw, 2rem);
     align-items: end;
   }
   .boat__media {
