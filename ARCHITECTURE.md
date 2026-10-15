@@ -1,7 +1,8 @@
 # Tropical Charters: site architecture
 
 A bilingual (EN/ES) marketing and booking site for a private boat charter agency in Fajardo, Puerto Rico.
-Tropical Charters books its partner captains' boats to the cays (Icacos, Palomino), Culebra and Vieques.
+Tropical Charters books its partner captains' boats to Icacos, Palomino, Vieques, Culebra and St. Thomas,
+in 4, 6 or 8 hour packages (St. Thomas is 8 hours only), plus sunset sails and private celebrations.
 
 This repo is currently a **design preview**. Pages, content, motion and the booking UI are built.
 Availability and payment are stubbed until the client's cal.com account exists.
@@ -38,19 +39,20 @@ src/
     Nav.astro            Transparent over the hero, solid after; hides on scroll down; mobile menu
     Hero.astro           Full-bleed photo, headline reveal, live Fajardo clock
     Statement.astro      Words fill in on scroll; inline photo pills after place names
-    Voyage.astro         Pinned nautical chart: the route draws and the water changes color through the day
-    TripList.astro       Editorial trip list with a cursor-following photo
-    Fleet.astro          Horizontal pinned gallery of the boats
+    Voyage.astro         Pinned nautical chart: the route draws out to every destination, closest first, and the
+                         water deepens with distance. On phones the chart zooms in and follows the boat.
+    Packages.astro       Card grid, one card per destination; a 4h/6h/8h toggle updates price, what fits and links
+    Fleet.astro          Three boat cards; each opens a full panel (<dialog>) with a photo carousel and details
     HowItWorks.astro     Three booking steps along a brass line
     Reviews.astro        Guest-book quotes
     Journal.astro        Destination-guide teasers (blog)
-    BookingPanel.astro   Boat / date / guests / total. Preview of the cal.com flow
+    BookingPanel.astro   Length / boat / date / guests / total. Reads ?h= and ?boat= from the link. Preview of the cal.com flow
     Footer.astro         Night section with a bioluminescent water canvas
   data/                  All content. Edit here, not in components
     site.ts              Contact details, marinas, WhatsApp
-    trips.ts             Trips: copy, itinerary, base price, which boats run them
-    boats.ts             Fleet: specs, captain, price multiplier
-    voyage.ts            Stops on the chart's sample day
+    trips.ts             Packages: destination copy, distance, lengths (hours, price, what fits), notices, boats
+    boats.ts             Fleet: specs, captain, amenities, photos, price multiplier
+    voyage.ts            Stops on the chart, with distance from the dock
     content.ts           Reviews and guide teasers
   i18n/index.ts          UI strings (en/es), href()/alternate() helpers, clock formatting
   lib/paths.ts           Base-path helpers (the site lives under /tropicalCharters/ on Pages)
@@ -64,10 +66,16 @@ public/images/           Photography (Unsplash placeholders for now)
 Content lives in typed TypeScript modules. Every user-facing string is a `Localized` pair, built with
 `L('English', 'Español')`, so a missing translation fails the type check.
 
-- **Trip:** `slug`, `name`, `summary`, `hours`, `priceFrom` (base whole-boat price), `boats[]` (boat slugs),
-  `departs`, `itinerary` (24h time + text), `included`, `bring`, `image`, `gallery[]`.
-- **Boat:** `slug`, `name`, `kind`, `lengthFt`, `guests`, `rate` (price multiplier), `captain`, `image`, `bestFor`, `about`.
-- **Price on a boat** = `priceFrom × rate`, rounded to $10. The list shows the cheapest boat as "From".
+- **Trip (package):** `slug`, `kind` (`destination` | `experience`), `name`, `summary`, `nm` + `travel` (distance from the dock),
+  `options[]`, optional `notice` (e.g. St. Thomas passport/customs), `boats[]` (boat slugs), `departs`, `included`, `bring`,
+  `image`, `gallery[]`.
+- **Option (a length):** `hours`, `price` (base whole-boat price), `fits` (what fits in that time). Destinations have
+  4/6/8; St. Thomas only 8; sunset 2.5.
+- **Boat:** `slug`, `name`, `kind`, `lengthFt`, `guests`, `rate` (price multiplier), `captain`, `image`, `gallery[]`,
+  `amenities`, `bestFor`, `about`.
+- **Price on a boat** = `option.price × boat.rate`, rounded to $10. Cards show the cheapest boat for the selected length as "From".
+- Adding a destination: add a `Trip` in `trips.ts` (its page and card appear automatically), and if it should be on
+  the chart, a stop in `voyage.ts` plus its island outline and route point in `Voyage.astro`.
 
 When the client wants to edit content without code, move `data/` into a headless CMS (Sanity or Decap)
 and keep the same shapes. Components won't change.
@@ -108,7 +116,9 @@ Setup:
 1. **One Google Calendar per boat**, shared with the agency account. Captains must put *every* booking
    on it, including their own direct customers. This is the only thing that prevents double-booking,
    so it belongs in the partner agreement.
-2. **One cal.com event type per boat × trip**, e.g. "Culebra – Brisa", 8h, price set, Stripe app on.
+2. **One cal.com event type per boat × destination × length**, e.g. "Culebra 6h – Brisa", price set, Stripe app on.
+   With 3 boats that is roughly 35 event types. cal.com's duplicate feature makes this quick, but if it becomes
+   unwieldy, use one event type per boat × destination with multiple durations and price in a custom question.
    All event types for a boat check that boat's calendar for conflicts, so a booked full day blocks the sunset slot.
 3. **Buffers:** about 60 minutes after each trip for turnaround.
 4. **Embed:** replace the calendar in `BookingPanel.astro` with cal.com's inline embed, selected by the boat
@@ -139,6 +149,7 @@ If the fleet grows past about 6 boats, or add-ons and gift cards matter, move to
 - [ ] Analytics (Plausible or GA4)
 - [ ] Bio bay: Laguna Grande and Mosquito Bay only allow non-motorized boats. Offer bio bay as a
       partner kayak add-on rather than a boat trip
+- [ ] St. Thomas: confirm the customs wording with the captains (guests clear customs themselves; passport required)
 
 ## Develop and deploy
 

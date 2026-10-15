@@ -2,19 +2,31 @@ import { L, type Localized } from '../i18n';
 import { withBase } from '../lib/paths';
 import { boatBySlug, boatPrice } from './boats';
 
-// PLACEHOLDER prices and durations. `priceFrom` is the base whole-boat price in USD;
-// each boat applies its own rate on top (see boats.ts).
+// A package is a destination (or an experience like sunset) with one or more lengths.
+// PLACEHOLDER prices: each option's `price` is the base whole-boat price in USD;
+// each boat applies its own rate on top (see boats.ts). Final prices are TBD by the client.
+export interface Option {
+  hours: number;
+  price: number;
+  /** What fits in this length, shown on the card and the trip page. */
+  fits: Localized<string[]>;
+}
+
 export interface Trip {
   slug: string;
+  kind: 'destination' | 'experience';
   name: Localized;
   summary: Localized;
-  hours: string;
-  priceFrom: number;
   image: string;
   gallery: string[];
   boats: string[];
   departs: string;
-  itinerary: Localized<[string, string][]>;
+  /** Distance from Villa Marina in nautical miles, and how long the run takes. */
+  nm?: number;
+  travel?: Localized;
+  options: Option[];
+  /** Short practical note shown on the card, e.g. passport and customs. */
+  notice?: Localized;
   included: Localized<string[]>;
   bring: Localized<string[]>;
 }
@@ -30,186 +42,159 @@ const bring = L(
 
 export const trips: Trip[] = [
   {
-    slug: 'icacos-half-day',
-    name: L('Icacos and the cays', 'Icacos y los cayos'),
+    slug: 'icacos',
+    kind: 'destination',
+    name: L('Cayo Icacos', 'Cayo Icacos'),
     summary: L(
-      'A morning on the sandbar at Cayo Icacos, then snorkeling off Lobos or Palomino. The easiest yes for first-timers.',
-      'Una mañana en la barra de arena de Cayo Icacos y snorkel en Lobos o Palomino. Perfecto para la primera vez.',
+      'A white sandbar in knee-deep water and a reef just off its edge. The easiest yes for first-timers.',
+      'Una barra de arena blanca con agua hasta las rodillas y un arrecife justo al lado. Perfecto para la primera vez.',
     ),
-    hours: '4',
-    priceFrom: 950,
     image: withBase('/images/icacos.webp'),
     gallery: [withBase('/images/sandbar.webp'), withBase('/images/snorkel.webp'), withBase('/images/palomino.webp')],
     boats: ['brisa', 'marea', 'coqui'],
     departs: 'Villa Marina',
-    itinerary: L(
-      [
-        ['9:00', 'Board at Villa Marina and meet your captain'],
-        ['9:30', 'Anchor off Icacos; wade the sandbar'],
-        ['11:00', 'Snorkel the reef at Lobos or Palomino'],
-        ['13:00', 'Back at the dock'],
-      ],
-      [
-        ['9:00', 'Abordas en Villa Marina y conoces a tu capitán'],
-        ['9:30', 'Anclamos en Icacos; caminas la barra de arena'],
-        ['11:00', 'Snorkel en el arrecife de Lobos o Palomino'],
-        ['13:00', 'De vuelta en el muelle'],
-      ],
-    ),
+    nm: 4,
+    travel: L('about 15 minutes', 'unos 15 minutos'),
+    options: [
+      { hours: 4, price: 950, fits: L(['Wade the Icacos sandbar', 'Snorkel the reef off Lobos'], ['Camina la barra de Icacos', 'Snorkel en el arrecife de Lobos']) },
+      { hours: 6, price: 1250, fits: L(['Icacos sandbar and reef', 'Lunch at anchor off Palomino', 'Snorkel Palominito'], ['Barra y arrecife de Icacos', 'Almuerzo anclados frente a Palomino', 'Snorkel en Palominito']) },
+      { hours: 8, price: 1550, fits: L(['Icacos, Lobos and Palomino', 'A long lunch at anchor', 'A slow afternoon at Palominito'], ['Icacos, Lobos y Palomino', 'Un almuerzo largo anclados', 'Una tarde tranquila en Palominito']) },
+    ],
     included,
     bring,
   },
   {
-    slug: 'cays-full-day',
-    name: L('The cays, all day', 'Los cayos, todo el día'),
+    slug: 'palomino',
+    kind: 'destination',
+    name: L('Palomino', 'Palomino'),
     summary: L(
-      'Icacos, Palomino and Palominito at an unhurried pace, with a long lunch at anchor in between.',
-      'Icacos, Palomino y Palominito sin prisa, con un almuerzo largo anclados entre uno y otro.',
+      'Calm, clear water around Palomino and tiny Palominito, with reefs close enough to swim to from the boat.',
+      'Agua tranquila y cristalina alrededor de Palomino y Palominito, con arrecifes a nado desde el bote.',
     ),
-    hours: '7',
-    priceFrom: 1450,
     image: withBase('/images/palomino.webp'),
-    gallery: [withBase('/images/icacos.webp'), withBase('/images/turtle.webp'), withBase('/images/anchored.webp')],
+    gallery: [withBase('/images/anchored.webp'), withBase('/images/turtle.webp'), withBase('/images/sandbar.webp')],
     boats: ['brisa', 'marea', 'coqui'],
     departs: 'Villa Marina',
-    itinerary: L(
-      [
-        ['9:00', 'Board at Villa Marina'],
-        ['9:30', 'Icacos sandbar and reef'],
-        ['12:00', 'Lunch at anchor off Palomino'],
-        ['14:00', 'Snorkel Palominito'],
-        ['16:00', 'Back at the dock'],
-      ],
-      [
-        ['9:00', 'Abordas en Villa Marina'],
-        ['9:30', 'Barra de arena y arrecife de Icacos'],
-        ['12:00', 'Almuerzo anclados frente a Palomino'],
-        ['14:00', 'Snorkel en Palominito'],
-        ['16:00', 'De vuelta en el muelle'],
-      ],
-    ),
-    included,
-    bring,
-  },
-  {
-    slug: 'culebra',
-    name: L('Culebra: Flamenco and Tamarindo', 'Culebra: Flamenco y Tamarindo'),
-    summary: L(
-      'Swim with sea turtles at Tamarindo and spend the afternoon on Flamenco, one of the most beautiful beaches in the Caribbean.',
-      'Nada con tortugas en Tamarindo y pasa la tarde en Flamenco, una de las playas más bellas del Caribe.',
-    ),
-    hours: '8',
-    priceFrom: 1900,
-    image: withBase('/images/culebra.webp'),
-    gallery: [withBase('/images/turtle.webp'), withBase('/images/cove.webp'), withBase('/images/wake.webp')],
-    boats: ['brisa', 'coqui'],
-    departs: 'Puerto del Rey',
-    itinerary: L(
-      [
-        ['8:30', 'Board at Puerto del Rey'],
-        ['9:45', 'Snorkel with turtles at Tamarindo'],
-        ['12:00', 'Lunch and swim at Flamenco'],
-        ['15:00', 'Culebrita if the sea allows'],
-        ['16:30', 'Back at the dock'],
-      ],
-      [
-        ['8:30', 'Abordas en Puerto del Rey'],
-        ['9:45', 'Snorkel con tortugas en Tamarindo'],
-        ['12:00', 'Almuerzo y playa en Flamenco'],
-        ['15:00', 'Culebrita si el mar lo permite'],
-        ['16:30', 'De vuelta en el muelle'],
-      ],
-    ),
+    nm: 4,
+    travel: L('about 15 minutes', 'unos 15 minutos'),
+    options: [
+      { hours: 4, price: 950, fits: L(['Swim and snorkel off Palomino', 'The Palominito sandbar'], ['Nado y snorkel en Palomino', 'La barra de Palominito']) },
+      { hours: 6, price: 1250, fits: L(['Palomino and Palominito', 'Lunch at anchor', 'Snorkel the reef at Lobos'], ['Palomino y Palominito', 'Almuerzo anclados', 'Snorkel en el arrecife de Lobos']) },
+      { hours: 8, price: 1550, fits: L(['Palomino, Palominito and Icacos', 'A long lunch at anchor', 'Time to do nothing at all'], ['Palomino, Palominito e Icacos', 'Un almuerzo largo anclados', 'Tiempo para no hacer nada']) },
+    ],
     included,
     bring,
   },
   {
     slug: 'vieques',
-    name: L('Vieques by sea', 'Vieques por mar'),
+    kind: 'destination',
+    name: L('Vieques', 'Vieques'),
     summary: L(
-      'The quiet south coast of Vieques: empty beaches, clear coves and a lunch stop in Esperanza.',
-      'La costa sur tranquila de Vieques: playas vacías, calas cristalinas y una parada para almorzar en Esperanza.',
+      'Quiet beaches, clear coves and, on a full day, the south coast and lunch in Esperanza.',
+      'Playas tranquilas, calas cristalinas y, en un día completo, la costa sur y almuerzo en Esperanza.',
     ),
-    hours: '8',
-    priceFrom: 1900,
     image: withBase('/images/vieques.webp'),
     gallery: [withBase('/images/cove.webp'), withBase('/images/snorkel.webp'), withBase('/images/hero.webp')],
     boats: ['brisa', 'coqui'],
     departs: 'Puerto del Rey',
-    itinerary: L(
-      [
-        ['8:30', 'Board at Puerto del Rey'],
-        ['10:00', 'First swim on the south coast'],
-        ['12:30', 'Lunch in Esperanza'],
-        ['14:30', 'A last cove before heading home'],
-        ['16:30', 'Back at the dock'],
-      ],
-      [
-        ['8:30', 'Abordas en Puerto del Rey'],
-        ['10:00', 'Primer baño en la costa sur'],
-        ['12:30', 'Almuerzo en Esperanza'],
-        ['14:30', 'Una última cala antes de regresar'],
-        ['16:30', 'De vuelta en el muelle'],
-      ],
+    nm: 13,
+    travel: L('about 40 minutes', 'unos 40 minutos'),
+    options: [
+      { hours: 4, price: 1350, fits: L(['A north-coast beach on Vieques', 'One swim stop on the way back'], ['Una playa de la costa norte', 'Una parada para nadar al regreso']) },
+      { hours: 6, price: 1650, fits: L(['The Vieques north coast', 'Lunch at anchor', 'Snorkel a quiet cove'], ['La costa norte de Vieques', 'Almuerzo anclados', 'Snorkel en una cala tranquila']) },
+      { hours: 8, price: 1950, fits: L(['Around to the south coast', 'Lunch in Esperanza', 'Beaches the ferry never reaches'], ['Hasta la costa sur', 'Almuerzo en Esperanza', 'Playas a las que el ferry no llega']) },
+    ],
+    included,
+    bring,
+  },
+  {
+    slug: 'culebra',
+    kind: 'destination',
+    name: L('Culebra', 'Culebra'),
+    summary: L(
+      'Sea turtles at Tamarindo and the white sand of Flamenco, one of the most beautiful beaches in the Caribbean.',
+      'Tortugas en Tamarindo y la arena blanca de Flamenco, una de las playas más bellas del Caribe.',
+    ),
+    image: withBase('/images/culebra.webp'),
+    gallery: [withBase('/images/turtle.webp'), withBase('/images/cove.webp'), withBase('/images/wake.webp')],
+    boats: ['brisa', 'coqui'],
+    departs: 'Puerto del Rey',
+    nm: 18,
+    travel: L('about an hour', 'alrededor de una hora'),
+    options: [
+      { hours: 4, price: 1450, fits: L(['Snorkel with turtles at Tamarindo'], ['Snorkel con tortugas en Tamarindo']) },
+      { hours: 6, price: 1750, fits: L(['Turtles at Tamarindo', 'Lunch and a swim at Flamenco'], ['Tortugas en Tamarindo', 'Almuerzo y playa en Flamenco']) },
+      { hours: 8, price: 1950, fits: L(['Tamarindo turtles and Flamenco', 'Culebrita if the sea allows'], ['Tortugas en Tamarindo y Flamenco', 'Culebrita si el mar lo permite']) },
+    ],
+    included,
+    bring,
+  },
+  {
+    slug: 'st-thomas',
+    kind: 'destination',
+    name: L('St. Thomas', 'St. Thomas'),
+    summary: L(
+      'Cross to the U.S. Virgin Islands for Magens Bay, Charlotte Amalie and lunch ashore. A full day only.',
+      'Cruza a las Islas Vírgenes de EE. UU. para Magens Bay, Charlotte Amalie y almuerzo en tierra. Solo día completo.',
+    ),
+    image: withBase('/images/st-thomas.webp'),
+    gallery: [withBase('/images/st-thomas-harbor.webp'), withBase('/images/crossing.webp'), withBase('/images/wake.webp')],
+    boats: ['brisa', 'coqui'],
+    departs: 'Puerto del Rey',
+    nm: 40,
+    travel: L('1.5 to 2 hours', '1.5 a 2 horas'),
+    options: [
+      {
+        hours: 8,
+        price: 2800,
+        fits: L(
+          ['The open-water crossing past Culebra', 'Magens Bay or Charlotte Amalie', 'Lunch ashore on your own time'],
+          ['La travesía en mar abierto pasando Culebra', 'Magens Bay o Charlotte Amalie', 'Almuerzo en tierra a tu ritmo'],
+        ),
+      },
+    ],
+    notice: L(
+      'Bring your passport. You’ll clear customs on arrival in St. Thomas; it’s usually quick.',
+      'Trae tu pasaporte. Pasarás por aduana al llegar a St. Thomas; normalmente es rápido.',
     ),
     included,
     bring,
   },
   {
     slug: 'sunset',
+    kind: 'experience',
     name: L('Sunset sail', 'Velero al atardecer'),
     summary: L(
       'Two and a half hours along the coast as the light goes gold. Bring a bottle; we’ll bring the glasses.',
       'Dos horas y media por la costa mientras la luz se vuelve dorada. Trae una botella; nosotros ponemos las copas.',
     ),
-    hours: '2.5',
-    priceFrom: 650,
     image: withBase('/images/sunset.webp'),
     gallery: [withBase('/images/sunset2.webp'), withBase('/images/boat-cat.webp'), withBase('/images/yacht-bow.webp')],
     boats: ['marea', 'brisa'],
     departs: 'Villa Marina',
-    itinerary: L(
-      [
-        ['17:00', 'Board at Villa Marina'],
-        ['17:30', 'Cruise the coast toward Las Croabas'],
-        ['18:30', 'Sunset at anchor'],
-        ['19:30', 'Back at the dock'],
-      ],
-      [
-        ['17:00', 'Abordas en Villa Marina'],
-        ['17:30', 'Recorrido por la costa hacia Las Croabas'],
-        ['18:30', 'Atardecer anclados'],
-        ['19:30', 'De vuelta en el muelle'],
-      ],
-    ),
+    options: [
+      { hours: 2.5, price: 650, fits: L(['Cruise the coast toward Las Croabas', 'Sunset at anchor'], ['Recorrido por la costa hacia Las Croabas', 'Atardecer anclados']) },
+    ],
     included,
     bring,
   },
   {
     slug: 'private-celebration',
+    kind: 'experience',
     name: L('Private celebrations', 'Celebraciones privadas'),
     summary: L(
       'Birthdays, proposals, bachelorettes and company days. Tell us the occasion and we’ll plan the route, the boat and the extras.',
       'Cumpleaños, propuestas, despedidas de soltera y días de empresa. Cuéntanos la ocasión y planificamos la ruta, el bote y los detalles.',
     ),
-    hours: '4–8',
-    priceFrom: 1200,
     image: withBase('/images/yacht-bow.webp'),
     gallery: [withBase('/images/boat-cat.webp'), withBase('/images/sunset2.webp'), withBase('/images/sandbar.webp')],
     boats: ['marea', 'brisa', 'coqui'],
     departs: 'Villa Marina',
-    itinerary: L(
-      [
-        ['—', 'Tell us the occasion and your group size'],
-        ['—', 'We suggest a route, boat and add-ons'],
-        ['—', 'Confirm and pay online'],
-      ],
-      [
-        ['—', 'Cuéntanos la ocasión y el tamaño del grupo'],
-        ['—', 'Te sugerimos ruta, bote y extras'],
-        ['—', 'Confirma y paga en línea'],
-      ],
-    ),
+    options: [
+      { hours: 4, price: 1200, fits: L(['Any of the cays', 'Decorations and music on request'], ['Cualquiera de los cayos', 'Decoración y música a petición']) },
+      { hours: 6, price: 1600, fits: L(['The cays or Vieques', 'Catering on request'], ['Los cayos o Vieques', 'Catering a petición']) },
+      { hours: 8, price: 2000, fits: L(['Culebra or Vieques', 'A full day planned around your group'], ['Culebra o Vieques', 'Un día completo planificado para tu grupo']) },
+    ],
     included,
     bring,
   },
@@ -217,12 +202,24 @@ export const trips: Trip[] = [
 
 export const tripBySlug = (slug: string) => trips.find((t) => t.slug === slug)!;
 
+/** Whole-boat price for one option on one boat. */
+export const optionPrice = (option: Option, boatSlug: string) => boatPrice(option.price, boatBySlug(boatSlug));
+
+/** Cheapest whole-boat price for an option across the boats that run the trip. */
+export const optionFrom = (trip: Trip, option: Option) => Math.min(...trip.boats.map((b) => optionPrice(option, b)));
+
+/** Cheapest whole-boat price for a trip, across all lengths and boats. */
+export const fromPrice = (trip: Trip) => Math.min(...trip.options.map((o) => optionFrom(trip, o)));
+
+/** "4, 6 or 8" / "4, 6 u 8" */
+export const hoursList = (trip: Trip, lang: 'en' | 'es') =>
+  new Intl.ListFormat(lang === 'en' ? 'en-US' : 'es', { type: 'disjunction' }).format(
+    trip.options.map((o) => String(o.hours)),
+  );
+
 export const money = (n: number, lang: 'en' | 'es') =>
   new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'es-PR', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
   }).format(n);
-
-/** Cheapest whole-boat price for a trip across the boats that run it. */
-export const fromPrice = (trip: Trip) => Math.min(...trip.boats.map((b) => boatPrice(trip.priceFrom, boatBySlug(b))));

@@ -1,6 +1,6 @@
 ---
 import { stops } from '../data/voyage';
-import { clock, t, type Lang } from '../i18n';
+import { href, t, type Lang } from '../i18n';
 
 interface Props {
   lang: Lang;
@@ -42,11 +42,15 @@ const islands: { name: string; pts: Pt[]; c: Pt; rings: number[] }[] = [
   { name: 'Lobos', c: [224, 76], rings: [], pts: [[220, 74], [226, 72], [229, 77], [222, 80]] },
   { name: 'Palomino', c: [237, 100], rings: [2], pts: [[230, 97], [238, 94], [245, 100], [238, 106], [230, 104]] },
   { name: 'Palominito', c: [245, 113], rings: [], pts: [[242, 112], [246, 110], [249, 114], [244, 116]] },
+  { name: 'St. Thomas', c: [868, 114], rings: [1.12, 1.26],
+    pts: [[770, 118], [790, 100], [820, 92], [850, 96], [880, 90], [915, 94], [945, 100], [968, 112], [960, 124], [930, 128], [900, 134], [870, 136], [840, 132], [810, 134], [785, 130]] },
+  { name: 'Cayo Norte', c: [560, 104], rings: [], pts: [[552, 104], [560, 100], [568, 103], [561, 107]] },
 ];
 
 // The route, and where each stop sits on it (same order as `stops`).
-const route = 'M170,114 C176,98 190,80 202,70 C214,78 224,90 228,104 C300,110 400,126 472,142 C400,186 258,172 172,118';
-const stopPts: Pt[] = [[170, 114], [202, 70], [228, 104], [472, 142], [172, 118]];
+const route =
+  'M170,114 C176,98 190,80 202,70 C214,78 224,90 228,104 C250,170 300,250 330,292 C380,250 450,200 505,176 C620,172 760,160 868,140';
+const stopPts: Pt[] = [[170, 114], [202, 70], [228, 104], [330, 292], [505, 176], [868, 140]];
 const nm5 = (5 * 1000) / 60;
 ---
 
@@ -54,7 +58,7 @@ const nm5 = (5 * 1000) / 60;
   <div class="voyage__sticky">
     <div class="voyage__grid wrap">
       <div class="voyage__chart">
-        <svg viewBox="0 0 600 420" role="img" aria-labelledby="voyage-legend" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 20 1000 390" role="img" aria-labelledby="voyage-legend" preserveAspectRatio="xMidYMid meet">
           <title id="voyage-legend">{ui.legend}</title>
 
           <g class="chart__contours">
@@ -77,7 +81,10 @@ const nm5 = (5 * 1000) / 60;
 
           <g class="chart__labels">
             <text x="54" y="190" class="chart__region">Puerto Rico</text>
-            <text x="300" y="34" class="chart__water">{lang === 'en' ? 'Atlantic Ocean' : 'Océano Atlántico'}</text>
+            <text x="560" y="34" class="chart__water">{lang === 'en' ? 'Atlantic Ocean' : 'Océano Atlántico'}</text>
+            <text x="640" y="392" class="chart__water">{lang === 'en' ? 'Caribbean Sea' : 'Mar Caribe'}</text>
+            <text x="868" y="80" text-anchor="middle">St. Thomas</text>
+            <text x="868" y="160" text-anchor="middle" class="chart__small">{lang === 'en' ? 'U.S. Virgin Islands' : 'Islas Vírgenes de EE. UU.'}</text>
             <text x="250" y="250" class="chart__water">{lang === 'en' ? 'Vieques Passage' : 'Pasaje de Vieques'}</text>
             <text x="375" y="332" class="chart__region chart__region--sm">Vieques</text>
             <text x="512" y="98">Culebra</text>
@@ -87,7 +94,7 @@ const nm5 = (5 * 1000) / 60;
             <text x="158" y="164" text-anchor="end" class="chart__small">Puerto del Rey</text>
           </g>
 
-          <g class="chart__compass" transform="translate(556 52)">
+          <g class="chart__compass" transform="translate(940 290)">
             <circle r="20" />
             <circle r="15" />
             <path d="M0,-26 L4,0 L0,26 L-4,0 Z" />
@@ -104,7 +111,7 @@ const nm5 = (5 * 1000) / 60;
           <path class="chart__route" d={route} data-route />
 
           {
-            stopPts.slice(0, -1).map(([x, y]) => (
+            stopPts.map(([x, y]) => (
               <circle class="chart__stop" cx={x} cy={y} r="3.2" data-stop-dot />
             ))
           }
@@ -125,7 +132,7 @@ const nm5 = (5 * 1000) / 60;
         </header>
 
         <ol class="voyage__rail numeric" aria-hidden="true">
-          {stops.map((s, i) => <li class:list={{ 'is-active': i === 0 }} data-rail>{clock(s.time, lang)}</li>)}
+          {stops.map((s, i) => <li class:list={{ 'is-active': i === 0 }} data-rail>{s.nm ? `${s.nm} ${ui.unit}` : ui.start}</li>)}
         </ol>
 
         <ol class="voyage__entries">
@@ -137,11 +144,16 @@ const nm5 = (5 * 1000) / 60;
                 </figure>
                 <div>
                   <p class="voyage__when numeric">
-                    <time>{clock(s.time, lang)}</time>
-                    <span>{s.place}</span>
+                    <em>{s.place}</em>
+                    <span>{s.nm ? `${s.nm} ${ui.unit}, ${s.travel[lang]}` : s.travel[lang]}</span>
                   </p>
                   <h3>{s.title[lang]}</h3>
                   <p class="voyage__body">{s.body[lang]}</p>
+                  {s.trip && (
+                    <a class="link voyage__link" href={href(lang, `/trips/${s.trip}/`)}>
+                      {t(lang).trips.book}
+                    </a>
+                  )}
                 </div>
               </li>
             ))
@@ -155,7 +167,7 @@ const nm5 = (5 * 1000) / 60;
 <style>
   .voyage {
     position: relative;
-    height: 560vh;
+    height: 640vh;
     background: var(--v-bg);
     color: var(--v-ink);
     --soft: color-mix(in oklab, var(--v-ink) 62%, var(--v-bg));
@@ -171,7 +183,7 @@ const nm5 = (5 * 1000) / 60;
   }
   .voyage__grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2.5fr) minmax(19rem, 1fr);
     gap: clamp(2rem, 4vw, 5rem);
     align-items: center;
     padding-top: 76px;
@@ -209,11 +221,11 @@ const nm5 = (5 * 1000) / 60;
   .chart__compass text {
     font-family: var(--serif);
     font-style: italic;
-    font-size: 11px;
+    font-size: 13px;
     fill: var(--v-ink);
   }
   .chart__labels .chart__small {
-    font-size: 8.5px;
+    font-size: 10px;
     fill: var(--soft);
   }
   .chart__labels .chart__region {
@@ -226,7 +238,7 @@ const nm5 = (5 * 1000) / 60;
     text-anchor: middle;
   }
   .chart__labels .chart__water {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.3em;
     fill: var(--soft);
   }
@@ -383,10 +395,14 @@ const nm5 = (5 * 1000) / 60;
     color: var(--soft);
     margin-bottom: 0.5rem;
   }
-  .voyage__when time {
+  .voyage__when em {
     font-family: var(--serif);
-    font-style: italic;
     color: var(--v-ink);
+  }
+  .voyage__link {
+    display: inline-block;
+    margin-top: 1rem;
+    font-size: 0.95rem;
   }
   .voyage__entry h3 {
     font-size: clamp(1.5rem, 1.1rem + 1vw, 2.1rem);
@@ -406,7 +422,8 @@ const nm5 = (5 * 1000) / 60;
       height: 100svh;
     }
     .voyage__chart svg {
-      max-height: 34svh;
+      max-height: 36svh;
+      overflow: hidden;
     }
     .voyage__head p,
     .voyage__rail {
@@ -525,15 +542,33 @@ const nm5 = (5 * 1000) / 60;
       gsap.fromTo(cur.querySelector('img'), { scale: 1.25 }, { scale: 1, duration: 1.6, delay: 0.2, ease: 'expo.out' });
     };
 
+    // On narrow screens the whole chart is too small to read, so the view zooms in
+    // and follows the boat like a camera.
+    const svg = section.querySelector('svg')!;
+    const fullView = svg.getAttribute('viewBox')!;
+    const narrow = window.matchMedia('(max-width: 900px)');
+    const follow = (x: number, y: number) => {
+      if (!narrow.matches) return svg.setAttribute('viewBox', fullView);
+      const w = 470;
+      const h = 330;
+      const vx = gsap.utils.clamp(0, 1000 - w, x - w / 2);
+      const vy = gsap.utils.clamp(10, 410 - h, y - h / 2);
+      svg.setAttribute('viewBox', `${vx.toFixed(1)} ${vy.toFixed(1)} ${w} ${h}`);
+    };
+    narrow.addEventListener('change', () => render());
+
     const render = () => {
       const l = state.r * len;
       const p = route.getPointAtLength(l);
+      follow(p.x, p.y);
       route.style.strokeDashoffset = `${len - l}`;
       boat.setAttribute('transform', `translate(${p.x} ${p.y})`);
       let next = 0;
       at.forEach((a, i) => state.r >= a - 0.004 && (next = i));
       show(next);
     };
+
+    render();
 
     // Travel between stops, pause at each. The water changes color on the way.
     const tl = gsap.timeline({

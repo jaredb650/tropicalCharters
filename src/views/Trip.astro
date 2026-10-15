@@ -2,8 +2,8 @@
 import Base from '../layouts/Base.astro';
 import BookingPanel from '../components/BookingPanel.astro';
 import { boatBySlug } from '../data/boats';
-import { fromPrice, money, trips, type Trip } from '../data/trips';
-import { clock, href, t, type Lang } from '../i18n';
+import { fromPrice, hoursList, money, optionFrom, trips, type Trip } from '../data/trips';
+import { href, t, type Lang } from '../i18n';
 
 interface Props {
   lang: Lang;
@@ -34,24 +34,41 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
   <div class="tb wrap">
     <div class="tb__main">
       <dl class="facts numeric">
-        <div><dt>{ui.trip.duration}</dt><dd>{ui.trips.hours(trip.hours)}</dd></div>
+        <div><dt>{ui.trip.duration}</dt><dd>{ui.trips.hours(hoursList(trip, lang))}</dd></div>
+        {trip.nm && trip.travel && <div><dt>{ui.trip.distance}</dt><dd>{trip.nm} {ui.voyage.unit}, {trip.travel[lang]}</dd></div>}
         <div><dt>{ui.trip.guests}</dt><dd>{ui.trips.guests(maxGuests)}</dd></div>
         <div><dt>{ui.trip.departs}</dt><dd>{trip.departs}</dd></div>
         <div><dt>{ui.trip.price}</dt><dd>{ui.trips.from(money(fromPrice(trip), lang))}</dd></div>
       </dl>
 
       <section class="tb__section">
-        <h2>{ui.trip.itinerary}</h2>
-        <ol class="itin">
+        <h2>{ui.trip.lengths}</h2>
+        {trip.options.length > 1 && <p class="tb__intro">{ui.trip.lengthsIntro}</p>}
+        <div class="lengths">
           {
-            trip.itinerary[lang].map(([time, what]) => (
-              <li data-reveal>
-                <time class="numeric">{clock(time, lang)}</time>
-                <p>{what}</p>
-              </li>
+            trip.options.map((o) => (
+              <div class="lengths__col">
+                <p class="lengths__h numeric">{ui.trips.hours(o.hours)}</p>
+                <p class="lengths__price numeric">
+                  {ui.trips.from(money(optionFrom(trip, o), lang))} <small>{ui.trips.perBoat}</small>
+                </p>
+                <ul>{o.fits[lang].map((f) => <li>{f}</li>)}</ul>
+              </div>
             ))
           }
-        </ol>
+        </div>
+        {
+          trip.notice && (
+            <p class="tb__notice">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="3" width="14" height="18" rx="2" />
+                <circle cx="12" cy="10" r="3" />
+                <path d="M9 16h6" />
+              </svg>
+              {trip.notice[lang]}
+            </p>
+          )
+        }
       </section>
 
       <div class="gallery">
@@ -115,7 +132,7 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
             </div>
             <h3>{o.name[lang]}</h3>
             <p class="numeric">
-              {ui.trips.hours(o.hours)}, {ui.trips.from(money(fromPrice(o), lang)).toLowerCase()}
+              {ui.trips.hours(hoursList(o, lang))}, {ui.trips.from(money(fromPrice(o), lang)).toLowerCase()}
             </p>
           </a>
         ))
@@ -192,7 +209,7 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
   }
   .facts {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
     margin: 0 0 clamp(3rem, 8vh, 5rem);
     border-top: 1px solid var(--line);
   }
@@ -215,26 +232,69 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
     font-size: clamp(1.8rem, 1.3rem + 1.4vw, 2.8rem);
     margin-bottom: 1.6rem;
   }
-  .itin {
+  .tb__intro {
+    color: var(--ink-soft);
+    margin: -0.6rem 0 1.6rem;
+    max-width: 52ch;
+  }
+  .lengths {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 1.5rem;
+  }
+  .lengths__col {
+    padding-top: 1rem;
+    border-top: 1px solid var(--atlantic);
+  }
+  .lengths__h {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.9rem;
+    line-height: 1.1;
+  }
+  .lengths__price {
+    font-size: 0.95rem;
+    margin: 0.2rem 0 0.9rem;
+  }
+  .lengths__price small {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  .lengths ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  .itin li {
-    display: grid;
-    grid-template-columns: 7rem 1fr;
-    gap: 1rem;
-    padding: 1rem 0;
-    border-top: 1px solid var(--line);
+  .lengths li {
+    position: relative;
+    padding: 0.25rem 0 0.25rem 1.2rem;
   }
-  .itin time {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 1.1rem;
-    color: var(--brass);
+  .lengths li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.9em;
+    width: 0.6rem;
+    height: 1px;
+    background: var(--brass);
   }
-  .itin p {
-    font-size: 1.1rem;
+  .tb__notice {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    margin-top: 2rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: 3px;
+    background: color-mix(in oklab, var(--brass-light) 26%, var(--salt));
+    max-width: 56ch;
+  }
+  .tb__notice svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: var(--atlantic);
+    stroke-width: 1.4;
   }
   .gallery {
     display: grid;
@@ -369,9 +429,6 @@ const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
     .tb__lists,
     .others__grid {
       grid-template-columns: 1fr;
-    }
-    .itin li {
-      grid-template-columns: 5.5rem 1fr;
     }
   }
   @media (prefers-reduced-motion: reduce) {

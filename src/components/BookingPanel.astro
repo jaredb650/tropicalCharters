@@ -2,8 +2,8 @@
 // Design preview of the booking flow. At launch, availability and payment come from
 // cal.com (one event type per boat per trip, each boat's Google Calendar for conflicts,
 // Stripe for payment). See ARCHITECTURE.md.
-import { boatBySlug, boatPrice } from '../data/boats';
-import { money, type Trip } from '../data/trips';
+import { boatBySlug } from '../data/boats';
+import { money, optionPrice, type Trip } from '../data/trips';
 import { t, type Lang } from '../i18n';
 
 interface Props {
@@ -12,21 +12,44 @@ interface Props {
 }
 const { lang, trip } = Astro.props;
 const ui = t(lang).booking;
+// Lengths open on the middle option (6h) unless the link asks for another with ?h=.
+const lengths = trip.options.map((o) => o.hours);
+const startHours = lengths[lengths.length === 3 ? 1 : 0];
 const options = trip.boats.map((slug) => {
   const b = boatBySlug(slug);
-  return { slug, name: b.name, kind: b.kind[lang], guests: b.guests, price: boatPrice(trip.priceFrom, b) };
+  // Whole-boat price for every length on this boat
+  const prices = Object.fromEntries(trip.options.map((o) => [o.hours, optionPrice(o, slug)]));
+  return { slug, name: b.name, kind: b.kind[lang], guests: b.guests, prices };
 });
-options.sort((a, b) => a.price - b.price);
+options.sort((a, b) => a.prices[startHours] - b.prices[startHours]);
 const config = {
   lang,
   trip: trip.slug,
   boats: options,
-  labels: { unavailable: ui.unavailable, pickDate: ui.pickDate, demo: ui.demo },
+  lengths,
+  startHours,
+  labels: { unavailable: ui.unavailable, pickDate: ui.pickDate, demo: ui.demo, hours: t(lang).trips.hours('{h}') },
 };
 ---
 
 <aside class="book" data-booking aria-labelledby="book-title">
   <h2 id="book-title" class="book__title">{ui.title}</h2>
+
+  {
+    lengths.length > 1 && (
+      <fieldset class="book__group">
+        <legend>{ui.length}</legend>
+        <div class="book__lengths">
+          {lengths.map((h) => (
+            <label class="book__len">
+              <input type="radio" name="length" value={h} checked={h === startHours} />
+              <span>{t(lang).trips.hours(h)}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    )
+  }
 
   <fieldset class="book__group">
     <legend>{ui.boat}</legend>
@@ -39,7 +62,7 @@ const config = {
             <span class="book__boat-kind">
               {o.kind}, {t(lang).trips.guests(o.guests).toLowerCase()}
             </span>
-            <span class="book__boat-price numeric">{money(o.price, lang)}</span>
+            <span class="book__boat-price numeric" data-boat-price={o.slug}>{money(o.prices[startHours], lang)}</span>
           </label>
         ))
       }
@@ -74,7 +97,7 @@ const config = {
 
   <div class="book__total">
     <span>{ui.total}</span>
-    <strong class="numeric" data-total>{money(options[0].price, lang)}</strong>
+    <strong class="numeric" data-total>{money(options[0].prices[startHours], lang)}</strong>
   </div>
 
   <button type="button" class="btn book__cta" data-cta aria-disabled="true">{ui.cta}</button>
@@ -110,6 +133,40 @@ const config = {
   .book__boats {
     display: grid;
     gap: 0.5rem;
+  }
+  .book__lengths {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .book__len {
+    position: relative;
+    cursor: pointer;
+  }
+  .book__len input {
+    position: absolute;
+    opacity: 0;
+  }
+  .book__len span {
+    display: block;
+    padding: 0.55rem 0.4rem;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    text-align: center;
+    font-size: 0.92rem;
+    transition:
+      background 0.3s,
+      color 0.3s,
+      border-color 0.3s;
+  }
+  .book__len input:checked + span {
+    background: var(--atlantic);
+    border-color: var(--atlantic);
+    color: var(--salt);
+  }
+  .book__len input:focus-visible + span {
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
   }
   .book__boat {
     position: relative;
@@ -292,13 +349,15 @@ const config = {
 <script>
   import { gsap } from '../scripts/motion';
 
-  type Opt = { slug: string; name: string; guests: number; price: number };
+  type Opt = { slug: string; name: string; guests: number; prices: Record<string, number> };
   const root = document.querySelector<HTMLElement>('[data-booking]');
   if (root) {
     const cfg = JSON.parse(root.querySelector('[data-config]')!.textContent!) as {
       lang: 'en' | 'es';
       trip: string;
       boats: Opt[];
+      lengths: number[];
+      startHours: number;
       labels: Record<string, string>;
     };
     const locale = cfg.lang === 'en' ? 'en-US' : 'es-PR';
@@ -326,7 +385,14 @@ const config = {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     let view = new Date(today.getFullYear(), today.getMonth(), 1);
-    let boat = cfg.boats[0];
+    // Links from the home page and fleet carry ?h=6 and ?boat=brisa.
+    const params = new URLSearchParams(location.search);
+    const askedHours = Number(params.get('h'));
+    let hours = cfg.lengths.includes(askedHours) ? askedHours : cfg.startHours;
+    let boat = cfg.boats.find((b) => b.slug === params.get('boat')) ?? cfg.boats[0];
+    const lengthInput = root.querySelector<HTMLInputElement>(`input[name="length"][value="${hours}"]`);
+    if (lengthInput) lengthInput.checked = true;
+    root.querySelector<HTMLInputElement>(`input[name="boat"][value="${boat.slug}"]`)!.checked = true;
     let date: Date | null = null;
     let guests = Math.min(2, boat.guests);
 
@@ -371,13 +437,18 @@ const config = {
       guestsEl.value = String(guests);
       root.querySelector<HTMLButtonElement>('[data-step="-1"]')!.disabled = guests <= 1;
       root.querySelector<HTMLButtonElement>('[data-step="1"]')!.disabled = guests >= boat.guests;
-      const next = money.format(boat.price);
+      root.querySelectorAll<HTMLElement>('[data-boat-price]').forEach((el) => {
+        const b = cfg.boats.find((x) => x.slug === el.dataset.boatPrice)!;
+        el.textContent = money.format(b.prices[hours]);
+      });
+      const next = money.format(boat.prices[hours]);
       if (totalEl.textContent !== next) {
         totalEl.textContent = next;
         gsap.fromTo(totalEl, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out' });
       }
       cta.setAttribute('aria-disabled', String(!date));
-      note.textContent = date ? `${boat.name}, ${dayFmt.format(date)}` : cfg.labels.pickDate;
+      const length = cfg.labels.hours.replace('{h}', String(hours)).toLowerCase();
+      note.textContent = date ? `${boat.name}, ${length}, ${dayFmt.format(date)}` : cfg.labels.pickDate;
     };
 
     root.querySelectorAll<HTMLInputElement>('input[name="boat"]').forEach((input) =>
@@ -385,6 +456,12 @@ const config = {
         boat = cfg.boats.find((b) => b.slug === input.value)!;
         if (date && booked(date)) date = null;
         renderCal();
+        update();
+      }),
+    );
+    root.querySelectorAll<HTMLInputElement>('input[name="length"]').forEach((input) =>
+      input.addEventListener('change', () => {
+        hours = Number(input.value);
         update();
       }),
     );

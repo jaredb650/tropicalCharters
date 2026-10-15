@@ -13,6 +13,9 @@ export interface Boat {
   rate: number;
   captain: string;
   image: string;
+  /** Extra photos for the expanded fleet card. */
+  gallery: string[];
+  amenities: Localized<string[]>;
   bestFor: Localized;
   about: Localized;
 }
@@ -27,6 +30,11 @@ export const boats: Boat[] = [
     rate: 1.4,
     captain: 'Luis Rivera',
     image: withBase('/images/boat-yacht.webp'),
+    gallery: [withBase('/images/wake.webp'), withBase('/images/yacht-bow.webp'), withBase('/images/st-thomas-harbor.webp')],
+    amenities: L(
+      ['Air-conditioned cabin', 'Full bathroom', 'Shaded flybridge', 'Swim platform and ladder', 'Bluetooth sound system'],
+      ['Cabina con aire acondicionado', 'Baño completo', 'Flybridge con sombra', 'Plataforma y escalera de baño', 'Sistema de sonido Bluetooth'],
+    ),
     bestFor: L('Culebra and Vieques in comfort', 'Culebra y Vieques con comodidad'),
     about: L(
       'Air-conditioned cabin, a full bathroom and shade on the flybridge. The smoothest ride across the passage.',
@@ -42,6 +50,11 @@ export const boats: Boat[] = [
     rate: 1.15,
     captain: 'Ana Colón',
     image: withBase('/images/boat-cat.webp'),
+    gallery: [withBase('/images/sunset2.webp'), withBase('/images/sandbar.webp'), withBase('/images/sunset.webp')],
+    amenities: L(
+      ['Two trampolines', 'Shaded cockpit for 18', 'Bathroom', 'Paddleboards', 'Bluetooth sound system'],
+      ['Dos trampolines', 'Cabina con sombra para 18', 'Baño', 'Paddleboards', 'Sistema de sonido Bluetooth'],
+    ),
     bestFor: L('Groups, sunsets and celebrations', 'Grupos, atardeceres y celebraciones'),
     about: L(
       'Two trampolines, a wide deck and room to spread out. Under sail when the wind cooperates.',
@@ -57,6 +70,11 @@ export const boats: Boat[] = [
     rate: 1,
     captain: 'Javier Ortiz',
     image: withBase('/images/boat-console.webp'),
+    gallery: [withBase('/images/anchored.webp'), withBase('/images/cove.webp'), withBase('/images/crossing.webp')],
+    amenities: L(
+      ['Twin outboards', 'Bimini shade', 'Shallow draft for coves', 'Snorkel gear for 8', 'Bluetooth sound system'],
+      ['Dos motores fuera de borda', 'Toldo bimini', 'Poco calado para calas', 'Equipo de snorkel para 8', 'Sistema de sonido Bluetooth'],
+    ),
     bestFor: L('Small groups who want to see more', 'Grupos pequeños que quieren ver más'),
     about: L(
       'Twin outboards and a shallow draft. Fastest to Culebra and able to tuck into coves the bigger boats skip.',

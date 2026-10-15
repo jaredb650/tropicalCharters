@@ -1,0 +1,354 @@
+---
+import { money, optionFrom, trips } from '../data/trips';
+import { href, t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang).trips;
+
+const destinations = trips.filter((x) => x.kind === 'destination');
+const experiences = trips.filter((x) => x.kind === 'experience');
+// Three-length packages open on the middle option; it's the one most groups pick.
+const defaultIndex = (n: number) => (n === 3 ? 1 : 0);
+const cards = [
+  ...destinations.map((trip, i) => ({ trip, wide: i >= 3 })),
+  ...experiences.map((trip) => ({ trip, wide: true })),
+];
+---
+
+<section class="pkgs" id="trips" data-pkgs>
+  <div class="wrap">
+    <header class="pkgs__head">
+      <h2>{t(lang).trips.title}</h2>
+      <p class="lead">{ui.intro}</p>
+    </header>
+
+    <div class="pkgs__grid">
+      {
+        cards.map(({ trip, wide }, n) => {
+          const url = href(lang, `/trips/${trip.slug}/`);
+          const d = defaultIndex(trip.options.length);
+          return (
+            <>
+              {n === destinations.length && <h3 class="pkgs__sub">{ui.more}</h3>}
+              <article class:list={['pkg', { 'pkg--wide': wide }]} data-pkg data-url={url}>
+                <a class="pkg__media" href={`${url}?h=${trip.options[d].hours}`} tabindex="-1" aria-hidden="true" data-pkg-link>
+                  <img src={trip.image} alt="" loading="lazy" />
+                </a>
+                <div class="pkg__body">
+                  <h3 class="pkg__name">
+                    <a href={`${url}?h=${trip.options[d].hours}`} data-pkg-link>
+                      {trip.name[lang]}
+                    </a>
+                  </h3>
+                  {trip.nm && trip.travel && <p class="pkg__away numeric">{ui.away(trip.nm, trip.travel[lang])}</p>}
+                  <p class="pkg__summary">{trip.summary[lang]}</p>
+
+                  {trip.options.length > 1 ? (
+                    <fieldset class="pkg__lengths">
+                      <legend class="visually-hidden">{ui.length}</legend>
+                      {trip.options.map((o, i) => (
+                        <label class="chip">
+                          <input
+                            type="radio"
+                            name={`len-${trip.slug}`}
+                            value={o.hours}
+                            checked={i === d}
+                            data-price={ui.from(money(optionFrom(trip, o), lang))}
+                          />
+                          <span>{ui.short(o.hours)}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  ) : (
+                    <p class="pkg__single numeric">
+                      {trip.kind === 'destination' ? `${ui.fullDay}, ${ui.hours(trip.options[0].hours).toLowerCase()}` : ui.hours(trip.options[0].hours)}
+                    </p>
+                  )}
+
+                  <div class="pkg__fits">
+                    {trip.options.map((o, i) => (
+                      <ul data-fits={o.hours} hidden={i !== d}>
+                        {o.fits[lang].map((f) => <li>{f}</li>)}
+                      </ul>
+                    ))}
+                  </div>
+
+                  {trip.notice && (
+                    <p class="pkg__notice">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="5" y="3" width="14" height="18" rx="2" />
+                        <circle cx="12" cy="10" r="3" />
+                        <path d="M9 16h6" />
+                      </svg>
+                      {trip.notice[lang]}
+                    </p>
+                  )}
+
+                  <div class="pkg__foot">
+                    <p class="pkg__price numeric">
+                      <span data-price>{ui.from(money(optionFrom(trip, trip.options[d]), lang))}</span>
+                      <small>{ui.perBoat}</small>
+                    </p>
+                    <a class="btn pkg__book" href={`${url}?h=${trip.options[d].hours}`} data-pkg-link>
+                      {ui.book}
+                    </a>
+                  </div>
+                </div>
+              </article>
+            </>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .pkgs {
+    padding-block: clamp(6rem, 16vh, 11rem);
+  }
+  .pkgs__head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 2rem;
+    margin-bottom: clamp(2.5rem, 6vh, 4.5rem);
+  }
+  .pkgs__grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: clamp(2.5rem, 5vh, 4rem) clamp(1.25rem, 2.2vw, 2.25rem);
+  }
+  .pkgs__sub {
+    grid-column: 1 / -1;
+    font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.4rem);
+    font-style: italic;
+    padding-top: clamp(1rem, 3vh, 2rem);
+    border-top: 1px solid var(--line);
+  }
+  .pkg {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
+  }
+  .pkg--wide {
+    grid-column: span 3;
+  }
+  .pkg__media {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 2px;
+    margin-bottom: 1.25rem;
+    background: var(--lagoon);
+  }
+  .pkg--wide .pkg__media {
+    aspect-ratio: 16 / 9;
+  }
+  .pkg__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1.4s var(--ease);
+  }
+  .pkg:hover .pkg__media img {
+    transform: scale(1.04);
+  }
+  .pkg__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .pkg__name {
+    font-size: clamp(1.7rem, 1.3rem + 1vw, 2.4rem);
+    margin-bottom: 0.35rem;
+  }
+  .pkg__name a {
+    text-decoration: none;
+  }
+  .pkg__away {
+    font-size: var(--t-small);
+    color: var(--ink-soft);
+    margin-bottom: 0.9rem;
+  }
+  .pkg__summary {
+    color: var(--ink-soft);
+    margin-bottom: 1.25rem;
+    max-width: 46ch;
+  }
+  .pkg__lengths {
+    display: flex;
+    gap: 0.5rem;
+    border: 0;
+    padding: 0;
+    margin: 0 0 1rem;
+  }
+  .chip {
+    position: relative;
+    cursor: pointer;
+  }
+  .chip input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+  .chip span {
+    display: block;
+    min-width: 3.6rem;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    text-align: center;
+    font-size: 0.92rem;
+    font-variant-numeric: lining-nums tabular-nums;
+    transition:
+      background 0.35s var(--ease),
+      color 0.35s var(--ease),
+      border-color 0.35s var(--ease);
+  }
+  .chip:hover span {
+    border-color: var(--atlantic);
+  }
+  .chip input:checked + span {
+    background: var(--atlantic);
+    border-color: var(--atlantic);
+    color: var(--salt);
+  }
+  .chip input:focus-visible + span {
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+  .pkg__single {
+    font-size: 0.92rem;
+    margin-bottom: 1rem;
+    padding: 0.45rem 0;
+  }
+  .pkg__fits ul {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    font-size: 0.95rem;
+  }
+  .pkg__fits li {
+    position: relative;
+    padding: 0.2rem 0 0.2rem 1.2rem;
+  }
+  .pkg__fits li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 0.6rem;
+    height: 1px;
+    background: var(--brass);
+  }
+  .pkg__notice {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 1.25rem;
+    border-radius: 3px;
+    background: color-mix(in oklab, var(--brass-light) 26%, var(--salt));
+    max-width: 46ch;
+  }
+  .pkg__notice svg {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    fill: none;
+    stroke: var(--atlantic);
+    stroke-width: 1.4;
+  }
+  .pkg__foot {
+    margin-top: auto;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+  .pkg__price {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  .pkg__price small {
+    display: block;
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+  .pkg__price span {
+    display: inline-block;
+  }
+  .pkg__book {
+    padding: 0.75em 1.25em;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1000px) {
+    .pkgs__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .pkg,
+    .pkg--wide {
+      grid-column: span 1;
+    }
+    .pkg--wide .pkg__media {
+      aspect-ratio: 4 / 3;
+    }
+  }
+  @media (max-width: 640px) {
+    .pkgs__head,
+    .pkgs__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, reducedMotion } from '../scripts/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-pkgs]')!;
+  const cards = section.querySelectorAll<HTMLElement>('[data-pkg]');
+
+  cards.forEach((card) => {
+    const price = card.querySelector<HTMLElement>('[data-price]')!;
+    card.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((input) =>
+      input.addEventListener('change', () => {
+        const h = input.value;
+        // Every link on the card carries the chosen length to the trip page.
+        card.querySelectorAll<HTMLAnchorElement>('[data-pkg-link]').forEach((a) => (a.href = `${card.dataset.url}?h=${h}`));
+
+        const next = card.querySelector<HTMLElement>(`[data-fits="${h}"]`)!;
+        const prev = card.querySelector<HTMLElement>('[data-fits]:not([hidden])');
+        if (prev && prev !== next) prev.hidden = true;
+        next.hidden = false;
+        price.textContent = input.dataset.price!;
+        if (!reducedMotion) {
+          gsap.fromTo(next.children, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.05, ease: 'expo.out' });
+          gsap.fromTo(price, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out' });
+        }
+      }),
+    );
+  });
+
+  if (!reducedMotion) {
+    gsap.set(cards, { opacity: 0, y: 50 });
+    ScrollTrigger.batch(cards, {
+      start: 'top 90%',
+      once: true,
+      onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, duration: 1.1, stagger: 0.1, ease: 'expo.out' }),
+    });
+  }
+</script>
