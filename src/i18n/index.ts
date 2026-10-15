@@ -26,6 +26,7 @@ export const ui = {
     otherLang: 'Español',
     nav: { trips: 'Trips', voyage: 'Destinations', fleet: 'Fleet', journal: 'Guides', book: 'Book a trip' },
     loader: 'Loading your day on the water',
+    loaderBoat: 'Getting your boat ready',
     hero: {
       lines: ['Leave Fajardo at nine.', 'Swim at Icacos by ten.'],
       sub: 'Private boat charters to the cays, Vieques, Culebra and St. Thomas, with captains we know by name.',
@@ -133,6 +134,7 @@ export const ui = {
     otherLang: 'English',
     nav: { trips: 'Viajes', voyage: 'Destinos', fleet: 'Flota', journal: 'Guías', book: 'Reservar' },
     loader: 'Preparando tu día en el mar',
+    loaderBoat: 'Preparando tu bote',
     hero: {
       lines: ['Sal de Fajardo a las nueve.', 'Nada en Icacos a las diez.'],
       sub: 'Charters privados a los cayos, Vieques, Culebra y St. Thomas, con capitanes que conocemos por su nombre.',

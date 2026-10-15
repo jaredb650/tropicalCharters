@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Preloader from '../components/Preloader.astro';
+import BoatLoader from '../components/BoatLoader.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { alternate, type Lang } from '../i18n';
@@ -11,8 +12,10 @@ interface Props {
   title: string;
   description: string;
   image?: string;
+  /** Trip pages pass their name here to get the boat loader instead of the intro. */
+  loaderLabel?: string;
 }
-const { lang, title, description, image = withBase('/images/hero.webp') } = Astro.props;
+const { lang, title, description, image = withBase('/images/hero.webp'), loaderLabel } = Astro.props;
 const path = Astro.url.pathname;
 const canonical = new URL(path, Astro.site);
 const other = new URL(alternate(lang, path), Astro.site);
@@ -42,7 +45,7 @@ const other = new URL(alternate(lang, path), Astro.site);
     />
   </head>
   <body>
-    <Preloader lang={lang} />
+    {loaderLabel ? <BoatLoader lang={lang} label={loaderLabel} /> : <Preloader lang={lang} />}
     <Nav lang={lang} />
     <main id="main">
       <slot />

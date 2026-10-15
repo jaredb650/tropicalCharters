@@ -1,0 +1,231 @@
+---
+// Loader for trip pages: a little sailboat bobbing across looping waves while the
+// page's photos load, then it sails off and the page is revealed.
+import { t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  /** Shown under the boat, e.g. the trip name. */
+  label: string;
+}
+const { lang, label } = Astro.props;
+
+// One sine wave repeated across twice the scene width; sliding it by one period loops seamlessly.
+const PERIOD = 80;
+const wave = (y: number, amp: number) => {
+  let d = `M0,${y} Q${PERIOD / 4},${y - amp} ${PERIOD / 2},${y}`;
+  for (let x = PERIOD; x <= 720; x += PERIOD / 2) d += ` T${x},${y}`;
+  return `${d} V160 H0 Z`;
+};
+---
+
+<div class="boatload" data-loader="boat" aria-hidden="true">
+  <div class="boatload__stage">
+    <svg class="boatload__scene" viewBox="0 0 320 150">
+      <defs>
+        <linearGradient id="bl-fade-g" x1="0" x2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity="0" />
+          <stop offset="0.14" stop-color="#fff" />
+          <stop offset="0.86" stop-color="#fff" />
+          <stop offset="1" stop-color="#fff" stop-opacity="0" />
+        </linearGradient>
+        <!-- Water fades out below the surface instead of ending in a hard edge -->
+        <linearGradient id="bl-front-g" gradientUnits="userSpaceOnUse" x1="0" y1="104" x2="0" y2="150">
+          <stop offset="0" stop-color="#5fafad" />
+          <stop offset="1" stop-color="#5fafad" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="bl-back-g" gradientUnits="userSpaceOnUse" x1="0" y1="96" x2="0" y2="140">
+          <stop offset="0" stop-color="#a7ddd4" />
+          <stop offset="1" stop-color="#a7ddd4" stop-opacity="0" />
+        </linearGradient>
+        <mask id="bl-fade" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="150">
+          <rect width="320" height="150" fill="url(#bl-fade-g)" />
+        </mask>
+      </defs>
+
+      <g mask="url(#bl-fade)">
+        <path class="bl-wave bl-wave--back" d={wave(104, 5)} />
+
+        <g data-bl-boat transform="translate(40 100)">
+          <g class="bl-bob">
+            <path class="bl-wake" d="M-38,10 Q-60,8 -86,12" />
+            <!-- mast and sails -->
+            <line class="bl-mast" x1="4" y1="-50" x2="4" y2="0" />
+            <path class="bl-main" d="M6.5,-47 L6.5,-4 L32,-4 Z" />
+            <path class="bl-jib" d="M1.5,-40 L1.5,-4 L-22,-4 Z" />
+            <path class="bl-flag" d="M4,-50 L13,-47 L4,-44 Z" />
+            <!-- hull -->
+            <path class="bl-hull" d="M-36,-2 H36 L27,11 Q0,15 -27,11 Z" />
+            <path class="bl-stripe" d="M-31,3 H31" />
+            <circle class="bl-port" cx="-14" cy="6.5" r="1.4" />
+            <circle class="bl-port" cx="-6" cy="6.5" r="1.4" />
+            <circle class="bl-port" cx="2" cy="6.5" r="1.4" />
+          </g>
+        </g>
+
+        <path class="bl-wave bl-wave--front" d={wave(112, 6)} />
+      </g>
+    </svg>
+
+    <p class="boatload__name">{label}</p>
+    <p class="boatload__msg">{t(lang).loaderBoat}</p>
+  </div>
+</div>
+
+<noscript><style>.boatload{display:none}</style></noscript>
+
+<style>
+  .boatload {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: var(--salt);
+    color: var(--atlantic);
+    pointer-events: none;
+  }
+  .boatload__stage {
+    width: min(88vw, 640px);
+    text-align: center;
+  }
+  .boatload__scene {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .boatload__name {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(2rem, 1.4rem + 2.4vw, 3.2rem);
+    line-height: 1.05;
+    margin-top: 0.4rem;
+  }
+  .boatload__msg {
+    margin-top: 0.6rem;
+    font-size: var(--t-small);
+    color: var(--ink-soft);
+  }
+
+  .bl-wave {
+    animation: bl-roll 2.4s linear infinite;
+  }
+  .bl-wave--back {
+    fill: url(#bl-back-g);
+    animation-duration: 3.4s;
+    animation-direction: reverse;
+  }
+  .bl-wave--front {
+    fill: url(#bl-front-g);
+    opacity: 0.92;
+  }
+  @keyframes bl-roll {
+    to {
+      transform: translateX(-80px);
+    }
+  }
+
+  .bl-bob {
+    transform-box: fill-box;
+    transform-origin: 50% 90%;
+    animation: bl-bob 2.2s ease-in-out infinite;
+  }
+  @keyframes bl-bob {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-3deg);
+    }
+    50% {
+      transform: translateY(-3px) rotate(3deg);
+    }
+  }
+  .bl-hull {
+    fill: var(--atlantic);
+  }
+  .bl-stripe {
+    stroke: var(--brass-light);
+    stroke-width: 1.6;
+  }
+  .bl-port {
+    fill: var(--salt);
+  }
+  .bl-mast {
+    stroke: var(--atlantic);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  .bl-main {
+    fill: var(--brass-light);
+    stroke: var(--atlantic);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+  }
+  .bl-jib {
+    fill: #fff;
+    stroke: var(--atlantic);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+  }
+  .bl-flag {
+    fill: #d7192d;
+  }
+  .bl-wake {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 4 6;
+    animation: bl-wake 0.8s linear infinite;
+  }
+  @keyframes bl-wake {
+    to {
+      stroke-dashoffset: -20;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bl-wave,
+    .bl-bob,
+    .bl-wake {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, markReady, reducedMotion } from '../scripts/motion';
+  import { endLoading, startLoading, trackAssets } from '../scripts/loading';
+
+  const root = document.querySelector<HTMLElement>('[data-loader="boat"]');
+  if (root) {
+    const boat = root.querySelector<SVGGElement>('[data-bl-boat]')!;
+    const text = root.querySelectorAll('.boatload__name, .boatload__msg');
+    const finish = () => endLoading(root);
+    startLoading();
+
+    if (reducedMotion) {
+      gsap.set(boat, { attr: { transform: 'translate(160 100)' } });
+      gsap.to(root, { autoAlpha: 0, duration: 0.4, delay: 0.3, onStart: markReady, onComplete: finish });
+    } else {
+      const assets = trackAssets();
+      const pos = { x: 40 };
+      const place = () => boat.setAttribute('transform', `translate(${pos.x.toFixed(1)} 100)`);
+
+      gsap.from(text, { y: 16, opacity: 0, duration: 0.9, stagger: 0.08, ease: 'expo.out' });
+      gsap.from(root.querySelector('.boatload__scene'), { opacity: 0, duration: 0.6 });
+
+      // The boat crosses as the page loads, waiting near the far side until the photos are in.
+      const cross = gsap.to(pos, { x: 230, duration: 1.6, ease: 'sine.inOut', onUpdate: place });
+
+      Promise.all([assets.ready, cross.then()]).then(() => {
+        gsap
+          .timeline({ onComplete: finish })
+          .to(pos, { x: 400, duration: 0.9, ease: 'power2.in', onUpdate: place })
+          .to(text, { y: -14, opacity: 0, duration: 0.5, stagger: 0.05, ease: 'power2.in' }, 0.15)
+          .add(markReady, 0.55)
+          .to(root, { clipPath: 'inset(0 0 100% 0)', duration: 1, ease: 'expo.inOut' }, 0.55);
+      });
+    }
+  }
+</script>

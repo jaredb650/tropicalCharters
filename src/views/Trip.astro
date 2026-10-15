@@ -16,7 +16,13 @@ const maxGuests = Math.max(...boats.map((b) => b.guests));
 const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
 ---
 
-<Base lang={lang} title={`${trip.name[lang]} | Tropical Charters`} description={trip.summary[lang]} image={trip.image}>
+<Base
+  lang={lang}
+  title={`${trip.name[lang]} | Tropical Charters`}
+  description={trip.summary[lang]}
+  image={trip.image}
+  loaderLabel={trip.name[lang]}
+>
   <section class="th" data-trip-hero>
     <div class="th__media">
       <img src={trip.image} alt="" data-preload fetchpriority="high" />

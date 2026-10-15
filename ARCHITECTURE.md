@@ -35,7 +35,8 @@ src/
     Trip.astro
   layouts/Base.astro     <head>, SEO and hreflang tags, preloader, nav, footer
   components/            One component per section, each with its own scoped CSS and script
-    Preloader.astro      Wordmark + coordinates counter, then the screen splits along the horizon
+    Preloader.astro      Home page loader: wordmark + coordinates counter, then the screen splits along the horizon
+    BoatLoader.astro     Trip page loader: a cartoon sailboat crosses looping waves with the trip name, then sails off
     Nav.astro            Transparent over the hero, solid after; hides on scroll down; mobile menu
     Hero.astro           Full-bleed photo, headline reveal, live Fajardo clock
     Statement.astro      Words fill in on scroll; inline photo pills after place names
@@ -90,8 +91,9 @@ and keep the same shapes. Components won't change.
 ## Motion system
 
 1. `scripts/motion.ts` creates one Lenis instance and ties it to GSAP's ticker and ScrollTrigger.
-2. The **preloader** waits for fonts and every `img[data-preload]` (with a minimum time on first visit,
-   shortened for the rest of the session). Then it calls `markReady()`.
+2. The **loader** (wordmark intro on the home page, sailboat on trip pages; chosen by `loaderLabel` in `Base.astro`)
+   waits for fonts and every `img[data-preload]` via `scripts/loading.ts`, then calls `markReady()`.
+   The home intro is shortened for the rest of the session after the first visit.
 3. Sections that animate on entry call `onReady(fn)`, so the hero reveal starts as the preloader splits.
 4. Scroll scenes use CSS `position: sticky` with a scrubbed ScrollTrigger rather than GSAP pinning.
    This avoids pin-spacer layout shifts and degrades to a normal page if JavaScript fails.
