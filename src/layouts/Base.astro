@@ -1,0 +1,52 @@
+---
+import '../styles/global.css';
+import Preloader from '../components/Preloader.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { alternate, type Lang } from '../i18n';
+import { withBase } from '../lib/paths';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+  image?: string;
+}
+const { lang, title, description, image = withBase('/images/hero.webp') } = Astro.props;
+const path = Astro.url.pathname;
+const canonical = new URL(path, Astro.site);
+const other = new URL(alternate(lang, path), Astro.site);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang={lang} href={canonical} />
+    <link rel="alternate" hreflang={lang === 'en' ? 'es' : 'en'} href={other} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta property="og:locale" content={lang === 'en' ? 'en_US' : 'es_PR'} />
+    <meta name="theme-color" content="#0b2c3d" />
+    <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300..600&display=swap"
+    />
+  </head>
+  <body>
+    <Preloader lang={lang} />
+    <Nav lang={lang} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+  </body>
+</html>

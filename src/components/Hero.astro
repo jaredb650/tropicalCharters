@@ -1,0 +1,213 @@
+---
+import { site, waLink } from '../data/site';
+import { withBase } from '../lib/paths';
+import { t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang).hero;
+---
+
+<section class="hero" data-hero>
+  <div class="hero__media" data-hero-media>
+    <img src={withBase('/images/hero.webp')} alt="" data-preload fetchpriority="high" decoding="async" />
+  </div>
+  <div class="hero__shade"></div>
+
+  <div class="hero__content wrap" data-hero-content>
+    <h1 class="hero__title">
+      {
+        ui.lines.map((line, i) => (
+          <span class="line-mask">
+            <span class:list={['hero__line', { 'hero__line--italic': i === 1 }]}>{line}</span>
+          </span>
+        ))
+      }
+    </h1>
+
+    <div class="hero__foot" data-hero-foot>
+      <p class="hero__sub">{ui.sub}</p>
+      <div class="hero__ctas">
+        <a class="btn btn--light" href="#trips">{ui.primary}</a>
+        <a class="btn btn--ghost" href={waLink()} target="_blank" rel="noopener">{ui.secondary}</a>
+      </div>
+    </div>
+
+    <div class="hero__meta numeric" data-hero-foot>
+      <p>
+        <span class="visually-hidden">{ui.clock}:</span>
+        Fajardo, <time data-clock data-tz={site.timezone} data-lang={lang}>&nbsp;</time>
+      </p>
+      <p class="hero__coords">{site.coords.lat}&ensp;{site.coords.lon}</p>
+      <p class="hero__scroll" aria-hidden="true"><span>{ui.scroll}</span><i></i></p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    height: 100svh;
+    min-height: 620px;
+    color: var(--salt);
+    overflow: hidden;
+    background: var(--atlantic);
+  }
+  .hero__media {
+    position: absolute;
+    /* Wider than the screen so the yacht sits in the right third, clear of the headline */
+    inset: 0 -72% 0 0;
+    will-change: transform;
+  }
+  .hero__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 60%;
+  }
+  .hero__shade {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgb(4 20 29 / 0.45) 0%, rgb(4 20 29 / 0) 22%),
+      linear-gradient(0deg, rgb(4 20 29 / 0.7) 0%, rgb(4 20 29 / 0.15) 48%, rgb(4 20 29 / 0) 70%);
+  }
+  .hero__content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: clamp(1.25rem, 3vh, 2.25rem);
+  }
+  .hero__title {
+    text-shadow: 0 2px 40px rgb(4 20 29 / 0.28);
+    font-size: var(--t-display);
+    line-height: 0.94;
+    letter-spacing: -0.025em;
+    margin-bottom: clamp(1.5rem, 4vh, 3rem);
+  }
+  .hero__line {
+    transform: translateY(110%);
+  }
+  .hero__line--italic {
+    font-style: italic;
+    padding-left: 0.6em;
+  }
+  .hero__foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 2rem 4rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgb(242 245 243 / 0.35);
+  }
+  .hero__sub {
+    font-size: var(--t-lead);
+    line-height: 1.4;
+    max-width: 30ch;
+  }
+  .hero__ctas {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .hero__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: clamp(1.5rem, 4vh, 2.75rem);
+    font-size: var(--t-small);
+    opacity: 0.85;
+  }
+  .hero__scroll {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .hero__scroll i {
+    position: relative;
+    width: 56px;
+    height: 1px;
+    background: rgb(242 245 243 / 0.3);
+    overflow: hidden;
+  }
+  .hero__scroll i::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--salt);
+    animation: tide 2.4s var(--ease) infinite;
+  }
+  @keyframes tide {
+    0% {
+      transform: translateX(-100%);
+    }
+    60%,
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  [data-hero-foot] {
+    opacity: 0;
+  }
+
+  @media (max-width: 720px) {
+    .hero__line--italic {
+      padding-left: 0;
+    }
+    .hero__coords,
+    .hero__scroll {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero__line {
+      transform: none;
+    }
+    [data-hero-foot] {
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, onReady, reducedMotion } from '../scripts/motion';
+
+  const hero = document.querySelector<HTMLElement>('[data-hero]')!;
+  const media = hero.querySelector('[data-hero-media]')!;
+  const img = media.querySelector('img')!;
+  const content = hero.querySelector('[data-hero-content]')!;
+
+  // Live local time at the marina.
+  const clock = hero.querySelector<HTMLTimeElement>('[data-clock]')!;
+  const fmt = new Intl.DateTimeFormat(clock.dataset.lang === 'es' ? 'es-PR' : 'en-US', {
+    timeZone: clock.dataset.tz,
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  const tick = () => (clock.textContent = fmt.format(new Date()));
+  tick();
+  setInterval(tick, 15_000);
+
+  if (!reducedMotion) {
+    gsap.set(img, { scale: 1.35 });
+    onReady(() => {
+      gsap
+        .timeline()
+        .to(img, { scale: 1, duration: 2.4, ease: 'expo.out' }, 0)
+        .to(hero.querySelectorAll('.hero__line'), { y: 0, duration: 1.4, ease: 'expo.out', stagger: 0.12 }, 0.35)
+        .to(hero.querySelectorAll('[data-hero-foot]'), { opacity: 1, duration: 1.2, ease: 'power2.out', stagger: 0.15 }, 0.9);
+
+      // As you scroll away the water drifts and the type lifts off.
+      gsap
+        .timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } })
+        .to(media, { yPercent: 18, scale: 1.08, ease: 'none' }, 0)
+        .to(content, { yPercent: -18, opacity: 0, ease: 'none' }, 0);
+    });
+  }
+</script>

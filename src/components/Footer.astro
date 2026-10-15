@@ -1,0 +1,248 @@
+---
+import { site, waLink } from '../data/site';
+import { alternate, href, t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang).footer;
+const home = href(lang, '/');
+---
+
+<footer class="night" data-night>
+  <canvas class="night__water" data-water aria-hidden="true"></canvas>
+
+  <div class="night__inner wrap">
+    <div class="night__cta">
+      <h2 class="night__title">{ui.cta}</h2>
+      <a class="btn btn--light" href={`${home}#trips`}>{ui.book}</a>
+    </div>
+
+    <div class="night__cols">
+      <div>
+        <h3>{ui.depart}</h3>
+        {site.marinas.map((m) => <p>{m.name}<br /><span>{m.town}</span></p>)}
+      </div>
+      <div>
+        <h3>{ui.whatsapp}</h3>
+        <p><a class="link" href={waLink()} target="_blank" rel="noopener">{site.phoneDisplay}</a></p>
+        <h3>{ui.email}</h3>
+        <p><a class="link" href={`mailto:${site.email}`}>{site.email}</a></p>
+      </div>
+      <div>
+        <h3>Instagram</h3>
+        <p><a class="link" href={site.instagram} target="_blank" rel="noopener">@tropicalcharters</a></p>
+        <h3>{ui.language}</h3>
+        <p><a class="link" href={alternate(lang, Astro.url.pathname)}>{t(lang).otherLang}</a></p>
+      </div>
+    </div>
+
+    <div class="night__base">
+      <p>© {new Date().getFullYear()} {ui.rights}</p>
+      <p class="night__hint">{ui.hint}</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .night {
+    position: relative;
+    background: var(--night);
+    color: var(--salt);
+    overflow: hidden;
+    --soft: color-mix(in oklab, var(--salt) 60%, var(--night));
+  }
+  .night__water {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .night__inner {
+    position: relative;
+    padding-top: clamp(7rem, 22vh, 14rem);
+    padding-bottom: 2rem;
+    pointer-events: none;
+  }
+  .night__inner a {
+    pointer-events: auto;
+  }
+  .night__cta {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: clamp(5rem, 14vh, 9rem);
+  }
+  .night__title {
+    font-size: var(--t-h2);
+    max-width: 11em;
+    font-style: italic;
+  }
+  .night__cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgb(242 245 243 / 0.16);
+  }
+  .night__cols h3 {
+    font-family: var(--sans);
+    font-size: var(--t-small);
+    font-weight: 400;
+    color: var(--soft);
+    margin-bottom: 0.4rem;
+  }
+  .night__cols p {
+    margin-bottom: 1.4rem;
+  }
+  .night__cols span {
+    color: var(--soft);
+  }
+  .night__base {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 4rem;
+    font-size: var(--t-small);
+    color: var(--soft);
+  }
+  .night__hint {
+    font-family: var(--serif);
+    font-style: italic;
+  }
+  @media (max-width: 800px) {
+    .night__cols {
+      grid-template-columns: 1fr;
+    }
+    .night__hint {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { reducedMotion } from '../scripts/motion';
+
+  // Bioluminescent water: drifting plankton that lights up when disturbed,
+  // by the cursor or by a slow "wake" that crosses on its own.
+  const footer = document.querySelector<HTMLElement>('[data-night]')!;
+  const canvas = footer.querySelector<HTMLCanvasElement>('[data-water]')!;
+  const ctx = canvas.getContext('2d')!;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  type P = { x: number; y: number; vx: number; vy: number; r: number; glow: number; tw: number };
+  let w = 0;
+  let h = 0;
+  let ps: P[] = [];
+
+  // Pre-rendered glow sprite
+  const sprite = document.createElement('canvas');
+  sprite.width = sprite.height = 64;
+  const sc = sprite.getContext('2d')!;
+  const g = sc.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(200,255,246,1)');
+  g.addColorStop(0.18, 'rgba(125,245,225,0.75)');
+  g.addColorStop(0.5, 'rgba(60,200,200,0.18)');
+  g.addColorStop(1, 'rgba(60,200,200,0)');
+  sc.fillStyle = g;
+  sc.fillRect(0, 0, 64, 64);
+
+  const resize = () => {
+    w = footer.clientWidth;
+    h = footer.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.min(320, Math.round((w * h) / 5200));
+    ps = Array.from({ length: n }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.1,
+      r: 0.6 + Math.random() * 1.4,
+      glow: 0,
+      tw: Math.random() * Math.PI * 2,
+    }));
+  };
+
+  const disturb = (x: number, y: number, radius: number, force: number) => {
+    for (const p of ps) {
+      const dx = p.x - x;
+      const dy = p.y - y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < radius * radius) {
+        const d = Math.sqrt(d2) || 1;
+        const k = 1 - d / radius;
+        p.glow = Math.min(1, p.glow + k * 0.9);
+        p.vx += (dx / d) * k * force;
+        p.vy += (dy / d) * k * force;
+      }
+    }
+  };
+
+  let last: { x: number; y: number } | null = null;
+  footer.addEventListener('pointermove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const speed = last ? Math.hypot(x - last.x, y - last.y) : 0;
+    disturb(x, y, 70 + Math.min(speed, 60), 0.35 + Math.min(speed, 40) * 0.02);
+    last = { x, y };
+  });
+  footer.addEventListener('pointerleave', () => (last = null));
+
+  let t = 0;
+  let running = false;
+  const frame = () => {
+    if (!running) return;
+    t += 1;
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+
+    // A slow wake crossing the water every ~14s keeps it alive without input.
+    const cycle = (t % 840) / 840;
+    if (cycle < 0.6) {
+      const k = cycle / 0.6;
+      disturb(-80 + k * (w + 160), h * (0.62 + Math.sin(k * Math.PI) * -0.18), 90, 0.18);
+    }
+
+    for (const p of ps) {
+      p.tw += 0.02;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx = p.vx * 0.96 + (Math.random() - 0.5) * 0.01;
+      p.vy = p.vy * 0.96 + (Math.random() - 0.5) * 0.01;
+      if (p.x < -10) p.x = w + 10;
+      if (p.x > w + 10) p.x = -10;
+      if (p.y < -10) p.y = h + 10;
+      if (p.y > h + 10) p.y = -10;
+      p.glow *= 0.975;
+
+      const base = 0.22 + Math.sin(p.tw) * 0.1;
+      const a = Math.min(1, base + p.glow);
+      const size = p.r * (8 + p.glow * 18);
+      ctx.globalAlpha = a;
+      ctx.drawImage(sprite, p.x - size / 2, p.y - size / 2, size, size);
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  };
+
+  resize();
+  new ResizeObserver(resize).observe(footer);
+
+  if (reducedMotion) {
+    running = true;
+    frame();
+    running = false;
+  } else {
+    new IntersectionObserver(([entry]) => {
+      const was = running;
+      running = entry.isIntersecting;
+      if (running && !was) requestAnimationFrame(frame);
+    }).observe(footer);
+  }
+</script>

@@ -1,0 +1,240 @@
+---
+import { alternate, href, t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const home = href(lang, '/');
+const links = [
+  [ui.nav.trips, `${home}#trips`],
+  [ui.nav.voyage, `${home}#voyage`],
+  [ui.nav.fleet, `${home}#fleet`],
+  [ui.nav.journal, `${home}#journal`],
+];
+const other = alternate(lang, Astro.url.pathname);
+---
+
+<header class="nav" data-nav>
+  <div class="nav__bar wrap">
+    <a class="nav__brand" href={home} aria-label="Tropical Charters">
+      Tropical <em>Charters</em>
+    </a>
+
+    <nav class="nav__links" aria-label="Main">
+      {links.map(([label, url]) => <a class="link-quiet" href={url}>{label}</a>)}
+    </nav>
+
+    <div class="nav__actions">
+      <a class="nav__lang" href={other} hreflang={lang === 'en' ? 'es' : 'en'} lang={lang === 'en' ? 'es' : 'en'}>
+        {ui.otherLang}
+      </a>
+      <a class="btn nav__book" href={`${home}#trips`}>{ui.nav.book}</a>
+      <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu" data-menu-toggle>
+        <span></span><span></span>
+        <span class="visually-hidden">Menu</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="menu" id="menu" data-menu hidden>
+    <nav class="menu__links wrap" aria-label="Mobile">
+      {links.map(([label, url]) => <a href={url} data-menu-link>{label}</a>)}
+      <a href={other} class="menu__lang">{ui.otherLang}</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    color: var(--salt);
+    transition:
+      color 0.5s var(--ease),
+      transform 0.6s var(--ease);
+  }
+  .nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklab, var(--salt) 86%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    opacity: 0;
+    transition: opacity 0.5s var(--ease);
+  }
+  :global(.nav.is-solid) {
+    color: var(--atlantic);
+  }
+  :global(.nav.is-solid)::before {
+    opacity: 1;
+  }
+  :global(.nav.is-hidden) {
+    transform: translateY(-100%);
+  }
+  .nav__bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    height: 76px;
+  }
+  .nav__brand {
+    font-family: var(--serif);
+    font-size: 1.35rem;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .nav__links {
+    display: flex;
+    gap: 2.2rem;
+    font-size: 0.95rem;
+  }
+  .nav__links a,
+  .nav__lang {
+    text-decoration: none;
+    opacity: 0.85;
+    transition: opacity 0.3s;
+  }
+  .nav__links a:hover,
+  .nav__lang:hover {
+    opacity: 1;
+  }
+  .nav__actions {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    font-size: 0.95rem;
+  }
+  .nav__book {
+    --btn-bg: var(--salt);
+    --btn-fg: var(--atlantic);
+    padding: 0.7em 1.3em;
+  }
+  :global(.nav.is-solid) .nav__book {
+    --btn-bg: var(--atlantic);
+    --btn-fg: var(--salt);
+  }
+  .nav__toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    position: relative;
+  }
+  .nav__toggle span:not(.visually-hidden) {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.5s var(--ease);
+  }
+  .nav__toggle span:nth-child(1) {
+    top: 18px;
+  }
+  .nav__toggle span:nth-child(2) {
+    top: 25px;
+  }
+  .nav__toggle[aria-expanded='true'] span:nth-child(1) {
+    transform: translateY(3.5px) rotate(45deg);
+  }
+  .nav__toggle[aria-expanded='true'] span:nth-child(2) {
+    transform: translateY(-3.5px) rotate(-45deg);
+  }
+  .menu {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--atlantic);
+    color: var(--salt);
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 12vh;
+  }
+  .menu[hidden] {
+    display: none;
+  }
+  .menu__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .menu__links a {
+    font-family: var(--serif);
+    font-size: clamp(2.6rem, 10vw, 4rem);
+    line-height: 1.1;
+    text-decoration: none;
+  }
+  .menu__links .menu__lang {
+    font-family: var(--sans);
+    font-size: 1.1rem;
+    margin-top: 1.6rem;
+    opacity: 0.75;
+  }
+  :global(.nav.menu-open) {
+    color: var(--salt);
+  }
+  :global(.nav.menu-open)::before {
+    opacity: 0;
+  }
+
+  @media (max-width: 960px) {
+    .nav__links,
+    .nav__lang {
+      display: none;
+    }
+    .nav__toggle {
+      display: block;
+    }
+  }
+  @media (max-width: 480px) {
+    .nav__book {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, lenis } from '../scripts/motion';
+
+  const nav = document.querySelector<HTMLElement>('[data-nav]')!;
+  const toggle = nav.querySelector<HTMLButtonElement>('[data-menu-toggle]')!;
+  const menu = nav.querySelector<HTMLElement>('[data-menu]')!;
+
+  // Solid once past the page's opening image; hide when scrolling down, show when scrolling up.
+  const firstSection = document.querySelector<HTMLElement>('main > section');
+  ScrollTrigger.create({
+    start: () => (firstSection?.offsetHeight ?? window.innerHeight) - 76,
+    end: 'max',
+    onToggle: (self) => nav.classList.toggle('is-solid', self.isActive),
+    onUpdate: (self) => {
+      if (nav.classList.contains('menu-open')) return;
+      nav.classList.toggle('is-hidden', self.direction === 1 && self.scroll() > window.innerHeight * 1.2);
+    },
+  });
+
+  const setOpen = (open: boolean) => {
+    toggle.setAttribute('aria-expanded', String(open));
+    nav.classList.toggle('menu-open', open);
+    if (open) {
+      menu.hidden = false;
+      lenis?.stop();
+      gsap.fromTo(menu, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 0.8, ease: 'expo.out' });
+      gsap.fromTo(menu.querySelectorAll('a'), { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, stagger: 0.05, duration: 0.8, ease: 'expo.out', delay: 0.1 });
+    } else {
+      lenis?.start();
+      gsap.to(menu, { clipPath: 'inset(0 0 100% 0)', duration: 0.6, ease: 'expo.inOut', onComplete: () => (menu.hidden = true) });
+    }
+  };
+  toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+  menu.querySelectorAll('[data-menu-link]').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && nav.classList.contains('menu-open') && setOpen(false));
+</script>

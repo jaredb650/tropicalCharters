@@ -1,0 +1,11 @@
+---
+import Trip from '../../views/Trip.astro';
+import { trips, tripBySlug } from '../../data/trips';
+
+export function getStaticPaths() {
+  return trips.map((t) => ({ params: { slug: t.slug } }));
+}
+const trip = tripBySlug(Astro.params.slug!);
+---
+
+<Trip lang="en" trip={trip} />

@@ -1,0 +1,147 @@
+---
+import { reviews } from '../data/content';
+import { t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang).reviews;
+---
+
+<section class="reviews" data-reviews>
+  <div class="wrap reviews__grid">
+    <h2 class="reviews__title">{ui.title}</h2>
+
+    <div class="reviews__stage" aria-live="polite">
+      {
+        reviews.map((r, i) => (
+          <figure class:list={['review', { 'is-active': i === 0 }]} data-review hidden={i !== 0}>
+            <blockquote>
+              <p>{r.quote[lang]}</p>
+            </blockquote>
+            <figcaption>
+              {r.who}, {r.trip[lang]}
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+
+    <div class="reviews__controls">
+      <button type="button" class="reviews__btn" data-dir="-1" aria-label={ui.prev}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <p class="numeric" aria-hidden="true"><span data-review-i>1</span> / {reviews.length}</p>
+      <button type="button" class="reviews__btn" data-dir="1" aria-label={ui.next}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reviews {
+    background: var(--lagoon);
+    padding-block: clamp(6rem, 16vh, 10rem);
+  }
+  .reviews__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr);
+    grid-template-rows: auto auto;
+    gap: 3rem clamp(2rem, 5vw, 6rem);
+  }
+  .reviews__title {
+    font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.4rem);
+    font-style: italic;
+  }
+  .reviews__stage {
+    display: grid;
+    min-height: 14rem;
+  }
+  .review {
+    grid-area: 1 / 1;
+    margin: 0;
+  }
+  .review blockquote {
+    margin: 0 0 1.6rem;
+  }
+  .review p {
+    font-family: var(--serif);
+    font-size: clamp(1.7rem, 1rem + 2.4vw, 3.3rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .review p::before {
+    content: '“';
+  }
+  .review p::after {
+    content: '”';
+  }
+  .review figcaption {
+    color: var(--ink-soft);
+  }
+  .reviews__controls {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-family: var(--serif);
+  }
+  .reviews__btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid var(--atlantic);
+    background: transparent;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition:
+      background 0.4s var(--ease),
+      color 0.4s var(--ease);
+  }
+  .reviews__btn:hover {
+    background: var(--atlantic);
+    color: var(--salt);
+  }
+  .reviews__btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+  }
+  @media (max-width: 800px) {
+    .reviews__grid {
+      grid-template-columns: 1fr;
+    }
+    .reviews__controls {
+      grid-column: 1;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from '../scripts/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-reviews]')!;
+  const items = [...section.querySelectorAll<HTMLElement>('[data-review]')];
+  const label = section.querySelector<HTMLElement>('[data-review-i]')!;
+  let i = 0;
+
+  section.querySelectorAll<HTMLButtonElement>('[data-dir]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const dir = Number(btn.dataset.dir);
+      const prev = items[i];
+      i = (i + dir + items.length) % items.length;
+      const next = items[i];
+      label.textContent = String(i + 1);
+      gsap.killTweensOf([prev, next]);
+      gsap.to(prev, { opacity: 0, x: -40 * dir, duration: 0.4, ease: 'power2.in', onComplete: () => (prev.hidden = true) });
+      next.hidden = false;
+      gsap.fromTo(next, { opacity: 0, x: 60 * dir }, { opacity: 1, x: 0, duration: 0.9, delay: 0.3, ease: 'expo.out' });
+    }),
+  );
+</script>

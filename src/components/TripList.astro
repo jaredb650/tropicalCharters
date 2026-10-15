@@ -1,0 +1,266 @@
+---
+import { boatBySlug } from '../data/boats';
+import { fromPrice, money, trips } from '../data/trips';
+import { href, t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang).trips;
+const maxGuests = (slugs: string[]) => Math.max(...slugs.map((s) => boatBySlug(s).guests));
+---
+
+<section class="trips" id="trips" data-trips>
+  <div class="wrap">
+    <header class="trips__head">
+      <h2>{ui.title}</h2>
+      <p class="lead">{ui.intro}</p>
+    </header>
+
+    <ul class="trips__list">
+      {
+        trips.map((trip) => (
+          <li class="trips__row" data-row>
+            <a href={href(lang, `/trips/${trip.slug}/`)} data-image={trip.image}>
+              <span class="trips__thumb" aria-hidden="true">
+                <img src={trip.image} alt="" loading="lazy" />
+              </span>
+              <span class="trips__name">{trip.name[lang]}</span>
+              <span class="trips__meta numeric">
+                <span>{ui.hours(trip.hours)}</span>
+                <span>{ui.guests(maxGuests(trip.boats))}</span>
+              </span>
+              <span class="trips__price numeric">
+                {ui.from(money(fromPrice(trip), lang))}
+                <small>{ui.perBoat}</small>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="trips__float" aria-hidden="true" data-float>
+    <div class="trips__float-inner" data-float-inner></div>
+  </div>
+</section>
+
+<style>
+  .trips {
+    position: relative;
+    padding-block: clamp(6rem, 16vh, 11rem);
+  }
+  .trips__head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 2rem;
+    margin-bottom: clamp(2.5rem, 6vh, 4.5rem);
+  }
+  .trips__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .trips__row {
+    position: relative;
+  }
+  .trips__row::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: var(--line);
+    transform-origin: left;
+  }
+  .trips__row a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 15rem 11rem;
+    align-items: baseline;
+    gap: 2rem;
+    padding: clamp(1.4rem, 3vh, 2.2rem) 0;
+    text-decoration: none;
+    transition:
+      padding 0.6s var(--ease),
+      color 0.4s;
+  }
+  .trips__thumb {
+    display: none;
+  }
+  .trips__name {
+    font-family: var(--serif);
+    font-size: clamp(1.8rem, 1.1rem + 2.4vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    transition:
+      transform 0.6s var(--ease),
+      font-style 0s;
+  }
+  .trips__meta {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+  .trips__price {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    text-align: right;
+  }
+  .trips__price small {
+    display: block;
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+  @media (hover: hover) {
+    .trips__list:hover .trips__row a {
+      color: color-mix(in oklab, var(--atlantic) 35%, var(--salt));
+    }
+    .trips__list .trips__row a:hover {
+      color: var(--atlantic);
+    }
+    .trips__row a:hover .trips__name {
+      transform: translateX(1.2rem);
+      font-style: italic;
+    }
+  }
+
+  /* Image that trails the cursor over the list */
+  .trips__float {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    width: 22rem;
+    aspect-ratio: 4 / 5;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .trips__float-inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 2px;
+    clip-path: inset(50% 50% 50% 50%);
+  }
+  .trips__float-inner img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 800px) {
+    .trips__head {
+      grid-template-columns: 1fr;
+    }
+    .trips__row a {
+      grid-template-columns: 5.5rem 1fr;
+      grid-template-areas: 'thumb name' 'thumb meta' 'thumb price';
+      gap: 0.2rem 1.1rem;
+      align-items: start;
+    }
+    .trips__thumb {
+      grid-area: thumb;
+      display: block;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+    .trips__thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .trips__name {
+      grid-area: name;
+      font-size: 1.6rem;
+    }
+    .trips__meta {
+      grid-area: meta;
+      flex-direction: row;
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+    .trips__price {
+      grid-area: price;
+      text-align: left;
+      font-size: 1rem;
+    }
+    .trips__price small {
+      display: inline;
+      margin-left: 0.4em;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, reducedMotion } from '../scripts/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-trips]')!;
+  const rows = section.querySelectorAll<HTMLElement>('[data-row]');
+
+  if (!reducedMotion) {
+    // Rows slide in together as the list arrives.
+    gsap.set(rows, { opacity: 0 });
+    ScrollTrigger.batch(rows, {
+      start: 'top 92%',
+      once: true,
+      onEnter: (batch) =>
+        gsap.fromTo(batch, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1.1, stagger: 0.09, ease: 'expo.out' }),
+    });
+  }
+
+  // Cursor-trailing preview, only where there is a real pointer.
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && !reducedMotion) {
+    const float = section.querySelector<HTMLElement>('[data-float]')!;
+    const inner = section.querySelector<HTMLElement>('[data-float-inner]')!;
+    const xTo = gsap.quickTo(float, 'x', { duration: 0.7, ease: 'power3' });
+    const yTo = gsap.quickTo(float, 'y', { duration: 0.7, ease: 'power3' });
+    const rTo = gsap.quickTo(float, 'rotation', { duration: 0.9, ease: 'power3' });
+    let lastX = 0;
+    let current: HTMLImageElement | null = null;
+
+    const list = section.querySelector('.trips__list')!;
+    list.addEventListener('pointermove', (e) => {
+      const ev = e as PointerEvent;
+      xTo(ev.clientX - float.offsetWidth / 2);
+      yTo(ev.clientY - float.offsetHeight / 2);
+      rTo(gsap.utils.clamp(-8, 8, (ev.clientX - lastX) * 0.6));
+      lastX = ev.clientX;
+    });
+
+    section.querySelectorAll<HTMLAnchorElement>('[data-image]').forEach((a) => {
+      a.addEventListener('pointerenter', () => {
+        const img = new Image();
+        img.src = a.dataset.image!;
+        img.alt = '';
+        inner.appendChild(img);
+        gsap.fromTo(img, { yPercent: 100, scale: 1.3 }, { yPercent: 0, scale: 1, duration: 0.8, ease: 'expo.out' });
+        if (current) {
+          const old = current;
+          gsap.to(old, { opacity: 0, duration: 0.6, delay: 0.3, onComplete: () => old.remove() });
+        }
+        current = img;
+      });
+    });
+
+    list.addEventListener('pointerenter', () => {
+      gsap.set(float, { visibility: 'visible' });
+      gsap.to(inner, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'expo.out' });
+    });
+    list.addEventListener('pointerleave', () => {
+      gsap.to(inner, {
+        clipPath: 'inset(50% 50% 50% 50%)',
+        duration: 0.5,
+        ease: 'expo.in',
+        onComplete: () => gsap.set(float, { visibility: 'hidden' }),
+      });
+    });
+  }
+</script>

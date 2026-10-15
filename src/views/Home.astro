@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Statement from '../components/Statement.astro';
+import Voyage from '../components/Voyage.astro';
+import TripList from '../components/TripList.astro';
+import Fleet from '../components/Fleet.astro';
+import HowItWorks from '../components/HowItWorks.astro';
+import Reviews from '../components/Reviews.astro';
+import Journal from '../components/Journal.astro';
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const meta = {
+  en: {
+    title: 'Tropical Charters | Private boat charters from Fajardo, Puerto Rico',
+    description:
+      'Private boat charters from Fajardo to Icacos, Culebra and Vieques. Choose your boat, pick a date and book online.',
+  },
+  es: {
+    title: 'Tropical Charters | Charters privados desde Fajardo, Puerto Rico',
+    description:
+      'Charters privados desde Fajardo a Icacos, Culebra y Vieques. Escoge tu bote, la fecha y reserva en línea.',
+  },
+}[lang];
+---
+
+<Base lang={lang} {...meta}>
+  <Hero lang={lang} />
+  <Statement lang={lang} />
+  <Voyage lang={lang} />
+  <TripList lang={lang} />
+  <Fleet lang={lang} />
+  <HowItWorks lang={lang} />
+  <Reviews lang={lang} />
+  <Journal lang={lang} />
+</Base>

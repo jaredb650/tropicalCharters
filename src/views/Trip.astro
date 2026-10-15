@@ -1,0 +1,405 @@
+---
+import Base from '../layouts/Base.astro';
+import BookingPanel from '../components/BookingPanel.astro';
+import { boatBySlug } from '../data/boats';
+import { fromPrice, money, trips, type Trip } from '../data/trips';
+import { clock, href, t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  trip: Trip;
+}
+const { lang, trip } = Astro.props;
+const ui = t(lang);
+const boats = trip.boats.map(boatBySlug);
+const maxGuests = Math.max(...boats.map((b) => b.guests));
+const others = trips.filter((x) => x.slug !== trip.slug).slice(0, 3);
+---
+
+<Base lang={lang} title={`${trip.name[lang]} | Tropical Charters`} description={trip.summary[lang]} image={trip.image}>
+  <section class="th" data-trip-hero>
+    <div class="th__media">
+      <img src={trip.image} alt="" data-preload fetchpriority="high" />
+    </div>
+    <div class="th__shade"></div>
+    <div class="th__content wrap">
+      <a class="th__back link" href={`${href(lang, '/')}#trips`}>{ui.trip.back}</a>
+      <h1>
+        <span class="line-mask"><span class="th__line">{trip.name[lang]}</span></span>
+      </h1>
+      <p class="th__summary lead">{trip.summary[lang]}</p>
+    </div>
+  </section>
+
+  <div class="tb wrap">
+    <div class="tb__main">
+      <dl class="facts numeric">
+        <div><dt>{ui.trip.duration}</dt><dd>{ui.trips.hours(trip.hours)}</dd></div>
+        <div><dt>{ui.trip.guests}</dt><dd>{ui.trips.guests(maxGuests)}</dd></div>
+        <div><dt>{ui.trip.departs}</dt><dd>{trip.departs}</dd></div>
+        <div><dt>{ui.trip.price}</dt><dd>{ui.trips.from(money(fromPrice(trip), lang))}</dd></div>
+      </dl>
+
+      <section class="tb__section">
+        <h2>{ui.trip.itinerary}</h2>
+        <ol class="itin">
+          {
+            trip.itinerary[lang].map(([time, what]) => (
+              <li data-reveal>
+                <time class="numeric">{clock(time, lang)}</time>
+                <p>{what}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <div class="gallery">
+        {
+          trip.gallery.map((src, i) => (
+            <figure class:list={['gallery__item', `gallery__item--${i}`]} data-clip>
+              <img src={src} alt="" loading="lazy" />
+            </figure>
+          ))
+        }
+      </div>
+
+      <section class="tb__section tb__lists">
+        <div>
+          <h2>{ui.trip.included}</h2>
+          <ul>{trip.included[lang].map((x) => <li>{x}</li>)}</ul>
+        </div>
+        <div>
+          <h2>{ui.trip.bring}</h2>
+          <ul>{trip.bring[lang].map((x) => <li>{x}</li>)}</ul>
+        </div>
+      </section>
+
+      <section class="tb__section">
+        <h2>{ui.trip.boats}</h2>
+        <div class="boats">
+          {
+            boats.map((b) => (
+              <article class="boats__item">
+                <div class="boats__media">
+                  <img src={b.image} alt={`${b.name}, ${b.kind[lang]}`} loading="lazy" />
+                </div>
+                <h3>{b.name}</h3>
+                <p>{b.kind[lang]}</p>
+                <p class="numeric">{ui.trips.guests(b.guests)}, {ui.fleet.captain.toLowerCase()} {b.captain}</p>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="tb__section tb__policy">
+        <h2>{ui.trip.policy}</h2>
+        <p>{ui.trip.policyText}</p>
+      </section>
+    </div>
+
+    <div class="tb__side">
+      <BookingPanel lang={lang} trip={trip} />
+    </div>
+  </div>
+
+  <section class="others wrap">
+    <h2>{ui.trip.other}</h2>
+    <div class="others__grid">
+      {
+        others.map((o) => (
+          <a class="others__item" href={href(lang, `/trips/${o.slug}/`)}>
+            <div class="others__media">
+              <img src={o.image} alt="" loading="lazy" />
+            </div>
+            <h3>{o.name[lang]}</h3>
+            <p class="numeric">
+              {ui.trips.hours(o.hours)}, {ui.trips.from(money(fromPrice(o), lang)).toLowerCase()}
+            </p>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .th {
+    position: relative;
+    height: 82svh;
+    min-height: 560px;
+    color: var(--salt);
+    overflow: hidden;
+    background: var(--atlantic);
+  }
+  .th__media {
+    position: absolute;
+    inset: 0;
+  }
+  .th__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .th__shade {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgb(4 20 29 / 0.45), rgb(4 20 29 / 0) 25%),
+      linear-gradient(0deg, rgb(4 20 29 / 0.72), rgb(4 20 29 / 0) 60%);
+  }
+  .th__content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: clamp(2rem, 6vh, 4rem);
+  }
+  .th__back {
+    align-self: flex-start;
+    font-size: var(--t-small);
+    margin-bottom: auto;
+    margin-top: 110px;
+  }
+  .th h1 {
+    font-size: clamp(2.8rem, 1.4rem + 5vw, 7rem);
+    line-height: 0.98;
+    max-width: 14em;
+    margin-bottom: 1.4rem;
+  }
+  .th__line {
+    transform: translateY(110%);
+  }
+  .th__summary {
+    color: rgb(242 245 243 / 0.88);
+    max-width: 40ch;
+  }
+
+  .tb {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+    gap: clamp(2rem, 6vw, 7rem);
+    padding-block: clamp(3rem, 8vh, 5rem) 0;
+  }
+  .tb__side {
+    position: relative;
+  }
+  .tb__side :global(.book) {
+    position: sticky;
+    top: 96px;
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0 0 clamp(3rem, 8vh, 5rem);
+    border-top: 1px solid var(--line);
+  }
+  .facts div {
+    padding: 1rem 1rem 0 0;
+  }
+  .facts dt {
+    font-size: var(--t-small);
+    color: var(--ink-soft);
+  }
+  .facts dd {
+    margin: 0.2rem 0 0;
+    font-family: var(--serif);
+    font-size: 1.25rem;
+  }
+  .tb__section {
+    margin-bottom: clamp(3.5rem, 9vh, 6rem);
+  }
+  .tb__section h2 {
+    font-size: clamp(1.8rem, 1.3rem + 1.4vw, 2.8rem);
+    margin-bottom: 1.6rem;
+  }
+  .itin {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .itin li {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--line);
+  }
+  .itin time {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--brass);
+  }
+  .itin p {
+    font-size: 1.1rem;
+  }
+  .gallery {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem;
+    margin-bottom: clamp(3.5rem, 9vh, 6rem);
+  }
+  .gallery__item {
+    margin: 0;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+  .gallery__item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .gallery__item--0 {
+    grid-row: 1 / 3;
+    aspect-ratio: 4 / 5;
+  }
+  .gallery__item--1,
+  .gallery__item--2 {
+    aspect-ratio: 4 / 3;
+  }
+  .tb__lists {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  .tb__lists h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+  }
+  .tb__lists ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tb__lists li {
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--line);
+  }
+  .boats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+  .boats__media {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 2px;
+    margin-bottom: 0.9rem;
+  }
+  .boats__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .boats__item h3 {
+    font-size: 1.5rem;
+    font-style: italic;
+    margin-bottom: 0.2rem;
+  }
+  .boats__item p {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+  .tb__policy p {
+    max-width: 60ch;
+    color: var(--ink-soft);
+  }
+
+  .others {
+    padding-block: clamp(4rem, 10vh, 7rem) clamp(6rem, 14vh, 9rem);
+    border-top: 1px solid var(--line);
+    margin-top: 2rem;
+  }
+  .others h2 {
+    margin-bottom: 2.5rem;
+  }
+  .others__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1rem, 2.5vw, 2.5rem);
+  }
+  .others__item {
+    text-decoration: none;
+  }
+  .others__media {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+  .others__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1.2s var(--ease);
+  }
+  .others__item:hover img {
+    transform: scale(1.06);
+  }
+  .others__item h3 {
+    font-size: 1.6rem;
+    margin-bottom: 0.3rem;
+  }
+  .others__item p {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 980px) {
+    .tb {
+      grid-template-columns: 1fr;
+    }
+    .tb__side :global(.book) {
+      position: static;
+    }
+    .tb__side {
+      order: -1;
+      margin-bottom: 3rem;
+    }
+  }
+  @media (max-width: 700px) {
+    .facts {
+      grid-template-columns: 1fr 1fr;
+      row-gap: 0.5rem;
+    }
+    .tb__lists,
+    .others__grid {
+      grid-template-columns: 1fr;
+    }
+    .itin li {
+      grid-template-columns: 5.5rem 1fr;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .th__line {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, onReady, reducedMotion } from '../scripts/motion';
+
+  const hero = document.querySelector<HTMLElement>('[data-trip-hero]')!;
+  if (!reducedMotion) {
+    const img = hero.querySelector('img')!;
+    gsap.set(img, { scale: 1.3 });
+    onReady(() => {
+      gsap.to(img, { scale: 1, duration: 2.2, ease: 'expo.out' });
+      gsap.to(hero.querySelector('.th__line'), { y: 0, duration: 1.4, ease: 'expo.out', delay: 0.3 });
+      gsap.from(hero.querySelectorAll('.th__summary, .th__back'), { opacity: 0, y: 20, duration: 1.2, delay: 0.7, stagger: 0.1 });
+    });
+
+    // Gallery photos open from the bottom edge as they arrive.
+    document.querySelectorAll<HTMLElement>('[data-clip]').forEach((fig) => {
+      gsap
+        .timeline({ scrollTrigger: { trigger: fig, start: 'top 85%' } })
+        .fromTo(fig, { clipPath: 'inset(100% 0 0 0)' }, { clipPath: 'inset(0% 0 0 0)', duration: 1.3, ease: 'expo.out' })
+        .fromTo(fig.querySelector('img'), { scale: 1.3 }, { scale: 1, duration: 1.8, ease: 'expo.out' }, 0);
+    });
+  }
+</script>

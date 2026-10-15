@@ -1,0 +1,96 @@
+---
+import { t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang).how;
+---
+
+<section class="how" data-how>
+  <div class="wrap">
+    <h2>{ui.title}</h2>
+    <div class="how__line" aria-hidden="true"><span data-how-line></span></div>
+    <ol class="how__steps">
+      {
+        ui.steps.map(([title, body], i) => (
+          <li data-how-step>
+            <span class="how__n numeric" aria-hidden="true">{i + 1}</span>
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .how {
+    padding-block: clamp(6rem, 16vh, 10rem);
+  }
+  .how h2 {
+    max-width: 12em;
+  }
+  .how__line {
+    position: relative;
+    height: 1px;
+    margin: clamp(3rem, 7vh, 5rem) 0 2rem;
+    background: var(--line);
+  }
+  .how__line span {
+    position: absolute;
+    inset: 0;
+    background: var(--brass);
+    transform-origin: left;
+  }
+  .how__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(2rem, 4vw, 4rem);
+  }
+  .how__n {
+    display: block;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 3.2rem;
+    line-height: 1;
+    color: var(--brass);
+    margin-bottom: 1.4rem;
+  }
+  .how__steps h3 {
+    font-size: 1.6rem;
+    margin-bottom: 0.8rem;
+  }
+  .how__steps p {
+    color: var(--ink-soft);
+    max-width: 32ch;
+  }
+  @media (max-width: 800px) {
+    .how__steps {
+      grid-template-columns: 1fr;
+      margin-top: 2.5rem;
+    }
+    .how__line {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, reducedMotion } from '../scripts/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-how]')!;
+  if (!reducedMotion) {
+    // The brass line runs left to right and each step lands as the line reaches it.
+    const tl = gsap.timeline({ scrollTrigger: { trigger: section, start: 'top 70%', end: 'center 45%', scrub: 0.8 } });
+    tl.fromTo('[data-how-line]', { scaleX: 0 }, { scaleX: 1, ease: 'none', duration: 3 }, 0);
+    section.querySelectorAll('[data-how-step]').forEach((step, i) => {
+      tl.fromTo(step, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1, ease: 'power2.out' }, i);
+    });
+  }
+</script>
